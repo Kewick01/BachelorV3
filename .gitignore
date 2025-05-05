@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo 
+
+# Virtuelle miljøer
+.venv/
+env/
+venv/
+
+#VS code
+.vscode/
+
