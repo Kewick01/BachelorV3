@@ -13,24 +13,6 @@ from home import home
 app = Flask(__name__, static_folder='../frontend/static')
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "default_secret_key")
 
-<<<<<<< Updated upstream
-firebase_cred_path =os.getenv("FIREBASE_CREDENTIALS", "serviceAccountKey.json")
-=======
-<<<<<<< Updated upstream
-firebase_cred_path =os.getenv("FIREBASE_CREDENTIALS", "path til serviceAccountKey.json")
-=======
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-firebase_cred_path =os.getenv("FIREBASE_CREDENTIALS", "serviceAccountKey.json")
->>>>>>> Stashed changes
->>>>>>> Stashed changes
-cred = credentials.Certificate(firebase_cred_path)
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 #Hvis vi vil koble til Azure Storage for filhåndtering
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
