@@ -1,4 +1,5 @@
 
+
 from flask import Blueprint, request, jsonify
 from firebase_config import auth, db
 import firebase_admin
@@ -22,6 +23,7 @@ def register_api():
                     display_name=username
                 )
                 db.collection("users").document(user.uid).set({
+
                         'username': username,
                         'email': email,
                         'uid': user.uid
@@ -34,4 +36,5 @@ def register_api():
         except Exception as e:
                 return jsonify({"error": str(e)}), 500
            
+
 
