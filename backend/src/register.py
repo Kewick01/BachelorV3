@@ -1,12 +1,6 @@
-import os
-from flask import Blueprint, url_for, render_template, redirect, request
-import firebase_admin
-from firebase_admin import credentials, firestore, auth
 
-firebase_cred_path = os.getenv("FIREBASE_CREDENTIALS", "path til serviceAccountKey.json")
-cred = credentials.Certificate('Path til serviceAccountKey.json')
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+from flask import Blueprint, url_for, render_template, redirect, request
+from firebase_config import auth, db
 
 register = Blueprint('register',__name__, template_folder='../frontend')
 
@@ -36,7 +30,7 @@ def show():
 
                     return redirect(url_for('login.show')+ 'Bruker opprettet!')
                 
-                except firebase_admin.auth.EmailAlreadyExistsError:
+                except auth.EmailAlreadyExistsError:
                     return redirect(url_for('register.show')+ 'Error, bruker eller email eksiterer allerede!')
             else:
                 return redirect(url_for('register.show')+ 'Fyll ut alle felt!')

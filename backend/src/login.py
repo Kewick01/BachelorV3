@@ -1,13 +1,7 @@
 import os
 from flask import Blueprint, url_for, render_template, redirect, request
 from flask_login import LoginManager, login_user, UserMixin
-import firebase_admin
-from firebase_admin import auth, firestore, credentials
-
-firebase_cred_path = os.getenv("FIREBASE_CREDENTIALS", "path til ServiceAccountKey.json")
-cred = credentials.Certificate("path til serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+from firebase_config import auth, db
 
 login = Blueprint('login',__name__,template_folder='../frontend')
 login_manager = LoginManager()
