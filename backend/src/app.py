@@ -13,7 +13,7 @@ from home import home
 app = Flask(__name__, static_folder='../frontend/static')
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "default_secret_key")
 
-firebase_cred_path =os.getenv("FIREBASE_CREDENTIALS", "path til serviceAccountKey.json")
+firebase_cred_path =os.getenv("FIREBASE_CREDENTIALS", "serviceAccountKey.json")
 cred = credentials.Certificate(firebase_cred_path)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
