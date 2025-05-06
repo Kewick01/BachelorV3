@@ -10,6 +10,7 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AdminScreen from './screens/AdminScreen';
+import MemberDetailScreen from './screens/MemberDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
           <Stack.Screen name="Admin" component={AdminScreen} />
+          <Stack.Screen name="MemberDetail" component={MemberDetailScreen} />
           {/* Andre skjermer legges til her etter hvert */}
         </Stack.Navigator>
       </NavigationContainer>
