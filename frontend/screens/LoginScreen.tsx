@@ -15,7 +15,10 @@ export default function LoginScreen({ navigation }: Props) {
       <Text style={styles.title}>Logg inn</Text>
       <TextInput placeholder="Brukernavn" value={username} onChangeText={setUsername} style={styles.input} />
       <TextInput placeholder="Passord" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
-      <Button title="Logg inn" onPress={() => setLoggedIn(true)} />
+      <Button title="Logg inn" onPress={() => {setLoggedIn(true); 
+      navigation.replace('Dashboard');
+  }}
+/>
       <Button title="Registrer deg" onPress={() => navigation.navigate('Register')} />
     </View>
   );
