@@ -1,0 +1,74 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Python virtuelle miljøer
+.venv/
+env/
+venv/
+
+# VS Code
+.vscode/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+
+# React Native build artifacts
+android/app/build/
+ios/build/
+ios/Pods/
+*.xcworkspace
+*.xcodeproj
+*.pbxproj
+
+# Metro bundler
+.expo/
+.expo-shared/
+babel.config.js
+metro.config.js
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+
+# Assets
+*.log
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Firebase / Google credentials
+google-services.json
+GoogleService-Info.plist
+
+# Watchman config
+.watchmanconfig
+
+# Lock file from failed git process
+.git/index.lock
+
+#Firebase
+# Firebase service account key file
+serviceAccountKey.json
