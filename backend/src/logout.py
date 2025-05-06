@@ -1,13 +1,10 @@
-from flask import Blueprint, url_for, redirect, flash
+from flask import Blueprint, jsonify
 from flask_login import LoginManager, login_required, logout_user
 
-logout = Blueprint('logout', __name__, template_folder='../frontend')
-login_manager= LoginManager()
+logout = Blueprint('logout', __name__)
 
-
-@logout.route('/logout')
+@logout.route('/logout', methods=['POST'])
 @login_required
-def show():
+def logout_api():
     logout_user()
-    flash('Du er logget ut!', 'info')
-    return redirect(url_for('login.show')+ 'Du er logget ut!')
+    return jsonify({"message": "Du er logget ut!"}), 200
