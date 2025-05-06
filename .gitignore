@@ -15,3 +15,7 @@ venv/
 .vscode/
 
 .DS_Store
+
+#Firebase
+# Firebase service account key file
+serviceAccountKey.json
