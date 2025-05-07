@@ -69,6 +69,6 @@ GoogleService-Info.plist
 # Lock file from failed git process
 .git/index.lock
 
-#Firebase
+
 # Firebase service account key file
 serviceAccountKey.json
