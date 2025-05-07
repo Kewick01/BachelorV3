@@ -25,7 +25,7 @@ def login_api():
          user = auth.get_user_by_email(email)
 
          user_ref = db.collection('users').document(user.uid).get()
-         if user_ref.exists:
+         if not user_ref.exists:
                 return jsonify({"error": "Bruker finnes ikke!"}), 404
          
          user_data = user_ref.to_dict()
@@ -37,6 +37,7 @@ def login_api():
                 "username": user_data['username'],
                 "email": user.email,
          }), 200
+    
     except UserNotFoundError:
         return jsonify({"error": "Bruker finnes ikke!"}), 401
     except Exception as e:
