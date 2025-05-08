@@ -10,7 +10,17 @@ export default function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleRegister = async() => {
+  const handleRegister = async () => {
+    if (!username || !email || !password) {
+      Alert.alert('Feil', 'Vennligst fyll ut alle feltene.');
+      return;
+    }
+
+    if (phone && !/^\+\d{7,15}$/.test(phone)) {
+      Alert.alert('Feil', 'Vennligst oppgi et gyldig telefonnummer med landskode.');
+      return;
+    }
+
     try {
       const response = await fetch('https://192.168.11.224:3000/register', {
         method: 'POST',
