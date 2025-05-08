@@ -1,6 +1,6 @@
 import os
 from flask import Flask, redirect
-from flask_login import LoginManager
+from flask_login import LoginManager, UserMixin
 from flask_cors import CORS
 from azure.storage.blob import BlobServiceClient
 from flask_login import LoginManager
@@ -14,7 +14,7 @@ from register import register
 from home import home
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "default_secret_key")
 
 #Hvis vi vil koble til Azure Storage for filhåndtering
@@ -31,7 +31,7 @@ app.register_blueprint(logout) #Litt usikker på om vi trenger en egen logout, m
 app.register_blueprint(register)
 app.register_blueprint(home)
 
-class User:
+class User(UserMixin):
     def __init__(self, uid, username, email):
         self.id = uid
         self.username = username
