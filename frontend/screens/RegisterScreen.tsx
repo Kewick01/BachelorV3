@@ -22,7 +22,7 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     try {
-      const response = await fetch('https://192.168.11.224:3000/register', {
+      const response = await fetch('http://192.168.11.224:3000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,12 +35,13 @@ export default function RegisterScreen({ navigation }: Props) {
       });
       const data = await response.json();
       if (!response.ok) { 
-        Alert.alert('Feil', data.console.error || 'Noe gikk galt. Prøv igjen.');
+        Alert.alert('Feil', data.error || 'Noe gikk galt. Prøv igjen.');
         return;
       }
 
       Alert.alert('Suksess', 'Brukeren er registrert!');
-      navigation.navigate('LoginScreen');
+      console.log("Naviger til Login");
+      navigation.navigate('Login');
     } catch (error) {
       Alert.alert('Feil', 'Noe gikk galt. Prøv igjen.');
     }

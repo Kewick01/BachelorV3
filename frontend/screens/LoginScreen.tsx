@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation }: Props) {
         return;
       }
 
-      Alert.alert('Suksess!', 'Velkommen! ${data.username}');
+      Alert.alert('Suksess!', `Velkommen! ${data.username}`);
 
       setLoggedIn(true);
       navigation.replace('Dashboard');

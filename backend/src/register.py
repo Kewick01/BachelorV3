@@ -39,6 +39,7 @@ def register_api():
         except EmailAlreadyExistsError:
                 return jsonify({"error": "Bruker eller email eksisterer allerede!"}), 409
         except Exception as e:
+                print("Feil i register_api:", e)
                 return jsonify({"error": str(e)}), 500
            
 
