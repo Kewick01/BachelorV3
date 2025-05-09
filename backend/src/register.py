@@ -16,8 +16,9 @@ def register_api():
         email = data.get('email')
         password = data.get('password')
         phone = data.get('phone')
+        admin_pin = data.get('admin_pin')
 
-        if not username or not email or not password:
+        if not username or not email or not password or not admin_pin:
                 return jsonify({"error": "Fyll ut alle felt!"}), 400
         try:
                 user = auth.create_user(
@@ -31,7 +32,8 @@ def register_api():
                         'username': username,
                         'email': email,
                         'uid': user.uid,
-                        'phone': phone
+                        'phone': phone,
+                        'admin_pin': admin_pin
                     })
                 
                 return jsonify({"message":"Bruker opprettet!", "uid": user.uid}), 201

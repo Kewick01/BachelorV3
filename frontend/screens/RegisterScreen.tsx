@@ -9,15 +9,26 @@ export default function RegisterScreen({ navigation }: Props) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [adminPin, setAdminPin] = useState(''); // For fremtidig admin-funksjonalitet
 
   const handleRegister = async () => {
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !phone || !adminPin) {
       Alert.alert('Feil', 'Vennligst fyll ut alle feltene.');
       return;
     }
 
     if (phone && !/^\+\d{7,15}$/.test(phone)) {
       Alert.alert('Feil', 'Vennligst oppgi et gyldig telefonnummer med landskode.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Feil', 'Passordet må være minst 6 tegn langt.');
+      return;
+    }
+
+    if (adminPin && adminPin.length !== 4) {
+      Alert.alert('Feil', 'Admin PIN må være 4 siffer.');
       return;
     }
 
@@ -30,7 +41,9 @@ export default function RegisterScreen({ navigation }: Props) {
         body: JSON.stringify({
           username,
           email,
-          password
+          password,
+          phone,
+          admin_pin: adminPin,
         }),
       });
       const data = await response.json();
@@ -54,6 +67,7 @@ export default function RegisterScreen({ navigation }: Props) {
       <TextInput placeholder="Mobilnummer" value={phone} onChangeText={setPhone} style={styles.input} />
       <TextInput placeholder="E-post" value={email} onChangeText={setEmail} style={styles.input} />
       <TextInput placeholder="Passord" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
+      <TextInput placeholder="Admin PIN (4 siffer)" value={adminPin} onChangeText={setAdminPin} keyboardType="numeric" maxLength={4} secureTextEntry style={styles.input} />
       <Button title="Registrer" onPress={handleRegister} />
     </View>
   );
