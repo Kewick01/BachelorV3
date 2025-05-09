@@ -12,6 +12,7 @@ from login import login
 from logout import logout
 from register import register
 from home import home
+from admin import admin
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -30,6 +31,7 @@ app.register_blueprint(login)
 app.register_blueprint(logout) #Litt usikker på om vi trenger en egen logout, men tar den med her
 app.register_blueprint(register)
 app.register_blueprint(home)
+app.register_blueprint(admin)
 
 class User(UserMixin):
     def __init__(self, uid, username, email):

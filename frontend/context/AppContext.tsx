@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Alert } from 'react-native';
+import AdminPinPrompt from '../components/AdminPinPrompt';  
 
 type Member = {
   id: string;
@@ -25,47 +25,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
 
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
   };
 
+
   const toggleAdmin = async () => {
     if (isAdmin) {
       setIsAdmin(false);
-      return;
+    }  else {
+      setShowPinPrompt(true);
     }
 
-    Alert.prompt(
-      'Admin PIN',
-      'Skriv inn admin PIN for å aktivere admin-modus',
-      [
-        {
-          text: 'Avbryt',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: async (input) => {
-            try {
-              const response = await axios.post('http://192.168.11.224:3000/verify-pin', {
-                pin: input },
-                { withCredentials: true }
-              );
-              if (response.status === 200) {
-                setIsAdmin(true);
-               } else {
-                Alert.alert('Feil', 'Ugyldig PIN. Prøv igjen.');
-              }
-            } catch (err) {
-              Alert.alert('Feil', 'Noe gikk galt. Prøv igjen.');
-              console.error(err);
-            }
-          },
-        },
-      ],
-      'secure-text'
-    );
   };
 
   return (
@@ -80,6 +53,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
+      <AdminPinPrompt
+       visible={showPinPrompt}
+       onCancel={() => setShowPinPrompt(false)}
+       onSuccess={() => {
+         setIsAdmin(true);
+         setShowPinPrompt(false);
+       }}
+      />
     </AppContext.Provider>
   );
 };
