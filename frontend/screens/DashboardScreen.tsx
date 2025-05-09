@@ -34,9 +34,25 @@ export default function DashboardScreen({ navigation }: Props) {
       style={styles.memberBubble}
       onPress={() => navigation.navigate('MemberDetail', { memberId: item.id })}
     >
+      <StickFigure color={item.character.color || 'gray'} />
       <Text style={styles.memberName}>{item.name}</Text>
       <Text style={styles.level}>Level 1</Text>
     </TouchableOpacity>
+  );
+
+  const StickFigure = ({color}: { color: string }) => (
+    <View style={stickStyles.container}>
+      <View style={[stickStyles.head, { backgroundColor: color }]} />
+      <View style={[stickStyles.body, { backgroundColor: color }]} />
+      <View style={stickStyles.limbsRow}>
+        <View style={[stickStyles.limb, { backgroundColor: color }]} />
+        <View style={[stickStyles.limb, { backgroundColor: color }]} />
+      </View>
+      <View style={stickStyles.limbsRow}>
+        <View style={[stickStyles.limb, { backgroundColor: color }]} />
+        <View style={[stickStyles.limb, { backgroundColor: color }]} />
+      </View>
+    </View>
   );
 
   return (
@@ -102,3 +118,35 @@ const styles = StyleSheet.create({
   },
   
 });
+
+const stickStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  head: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginBottom: 4,
+  },
+  body: {
+    width: 6,
+    height: 40,
+    borderRadius: 3,
+    marginBottom: 4,
+  },
+  limbsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 40,
+    marginBottom: 4,
+  },
+  limb: {
+    width: 6,
+    height: 20,
+    borderRadius: 3,
+  },
+});
+
+

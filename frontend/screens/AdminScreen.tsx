@@ -14,10 +14,13 @@ import { v4 as uuidv4 } from 'uuid'; // npm install uuid + npm install --save-de
 
 type Props = NativeStackScreenProps<any>;
 
+const availableColors = ['red', 'blue', 'green', 'yellow', 'orange', 'black', 'pink', 'purple'];
+
 export default function AdminScreen({ navigation }: Props) {
   const { members, addMember } = useAppContext();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [selectedColor, setSelectedColor] = useState(availableColors[0]);
 
   const handleAdd = () => {
     if (name.trim() && code.length === 4) {
@@ -27,6 +30,10 @@ export default function AdminScreen({ navigation }: Props) {
         code,
         money: 0,
         tasks: [],
+        character: {
+          type: 'pinnefigur',
+          color: selectedColor,
+        },
       });
       setName('');
       setCode('');
@@ -74,6 +81,20 @@ export default function AdminScreen({ navigation }: Props) {
         maxLength={4}
         style={styles.input}
       />
+      <Text style={styles.subtitle}>Velg farge på karakteren din:</Text>
+      <View style={styles.colorContainer}>
+        {availableColors.map((color) =>(
+          <TouchableOpacity
+          key = {color}
+          style={[
+            styles.colorCircle,
+            {backgroundColor: color },
+            selectedColor === color && styles.selectedCircle,
+          ]}
+          onPress={() => setSelectedColor(color)}
+          />
+        ))}
+      </View>
       <Button title="Legg til" onPress={handleAdd} />
 
       <View style={{ marginTop: 20 }}>
@@ -101,5 +122,21 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 16,
+  },
+  colorContainer: {
+    flexDirection: 'row',
+    marginVertical: 10,
+    gap: 10,
+  },
+  colorCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  selectedCircle: {
+    borderWidth: 2,
+    borderColor: 'black',
   },
 });
