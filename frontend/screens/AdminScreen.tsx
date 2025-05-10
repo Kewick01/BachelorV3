@@ -65,9 +65,9 @@ export default function AdminScreen({ navigation }: Props) {
     <TouchableOpacity
       style={styles.memberItem}
       onPress={() => {
-        // Senere: Naviger til oppgavebehandling
-        Alert.alert(`Klikket på ${item.name}`);
-      }}
+  navigation.navigate('MemberDetail', { memberId: item.id });
+}}
+
     >
       <Text style={styles.memberName}>{item.name}</Text>
     </TouchableOpacity>
