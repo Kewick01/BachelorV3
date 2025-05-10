@@ -6,15 +6,25 @@ import {
   Button,
   StyleSheet,
   TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type Props = NativeStackScreenProps<any>;
 
+const shopItems = [
+  { id: '1', name: '🎩 Hatt', price: 3 },
+  { id: '2', name: '🕶️ Solbriller', price: 5 },
+  { id: '3', name: '👕 T-skjorte', price: 2 },
+  { id: '4', name: '👖 Bukse', price: 4 },
+  { id: '5', name: '🩳 Shorts', price: 6 },
+  { id: '6', name: '👟 Sko', price: 3 },
+];
+
 export default function MemberDetailScreen({ route, navigation }: Props) {
   const { memberId } = route.params;
-  const { members } = useAppContext();
+  const { members, updateMember } = useAppContext(); // Forutsetter at du har en updateMember-funksjon
   const member = members.find((m) => m.id === memberId);
 
   const [enteredCode, setEnteredCode] = useState('');
@@ -56,6 +66,27 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const handlePurchase = (item: { id: string; name: string; price: number }) => {
+    if (member.money >= item.price) {
+      member.money -= item.price;
+      member.cosmetics = [...(member.cosmetics || []), item.name];
+
+      // Oppdater i context og ev. Firebase her:
+      updateMember(member); // Du må ha denne implementert i AppContext
+
+      // Eksempel på Firebase Firestore update (hvis ønskelig)
+      // const memberRef = doc(firestore, 'members', member.id);
+      // await updateDoc(memberRef, {
+      //   money: member.money,
+      //   cosmetics: member.cosmetics,
+      // });
+
+      alert(`Du kjøpte ${item.name}!`);
+    } else {
+      alert('Ikke nok penger!');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{member.name}</Text>
@@ -84,7 +115,20 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
             <Text>Ingen oppgaver enda.</Text>
           )
         ) : (
-          <Text>Butikken kommer snart 🛍️</Text>
+          <View style={styles.shopGrid}>
+            {shopItems.map((item) => (
+              <View key={item.id} style={styles.shopItem}>
+                <Text style={styles.shopName}>{item.name}</Text>
+                <Text style={styles.shopPrice}>{item.price} kr</Text>
+                <TouchableOpacity
+                  style={styles.buyButton}
+                  onPress={() => handlePurchase(item)}
+                >
+                  <Text>Kjøp</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
         )}
       </View>
 
@@ -108,4 +152,25 @@ const styles = StyleSheet.create({
   tab: { marginRight: 20, fontSize: 16 },
   activeTab: { fontWeight: 'bold', textDecorationLine: 'underline' },
   tabContent: { flex: 1 },
+  shopGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  shopItem: {
+    width: '48%',
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  shopName: { fontSize: 18 },
+  shopPrice: { marginBottom: 5 },
+  buyButton: {
+    backgroundColor: '#aaffaa',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
 });

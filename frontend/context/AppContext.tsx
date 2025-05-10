@@ -1,13 +1,21 @@
 import axios from 'axios';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import AdminPinPrompt from '../components/AdminPinPrompt';  
+import AdminPinPrompt from '../components/AdminPinPrompt';
+
+type Task = {
+  id: string;
+  title: string;
+  price: number;
+  completed: boolean;
+};
 
 type Member = {
   id: string;
   name: string;
   code: string;
   money: number;
-  tasks: { id: string; title: string; price: number; completed: boolean }[];
+  cosmetics?: string[]; // Ny: kosmetiske elementer brukeren har kjøpt
+  tasks: Task[];
 };
 
 type AppContextType = {
@@ -17,6 +25,7 @@ type AppContextType = {
   toggleAdmin: () => void;
   members: Member[];
   addMember: (member: Member) => void;
+  updateMember: (updatedMember: Member) => void; // Ny
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -29,16 +38,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
+
+    // Send til backend om ønskelig
+    axios.post('http://localhost:8000/add_member', member).catch((err) =>
+      console.error('Feil ved lagring av nytt medlem:', err)
+    );
   };
 
+  const updateMember = (updatedMember: Member) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+    );
+
+    // Send til backend (eller bytt til Firestore her)
+    axios.post('http://localhost:8000/update_member', updatedMember).catch((err) =>
+      console.error('Feil ved oppdatering av medlem:', err)
+    );
+  };
 
   const toggleAdmin = async () => {
     if (isAdmin) {
       setIsAdmin(false);
-    }  else {
+    } else {
       setShowPinPrompt(true);
     }
-
   };
 
   return (
@@ -50,16 +73,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         toggleAdmin,
         members,
         addMember,
+        updateMember,
       }}
     >
       {children}
       <AdminPinPrompt
-       visible={showPinPrompt}
-       onCancel={() => setShowPinPrompt(false)}
-       onSuccess={() => {
-         setIsAdmin(true);
-         setShowPinPrompt(false);
-       }}
+        visible={showPinPrompt}
+        onCancel={() => setShowPinPrompt(false)}
+        onSuccess={() => {
+          setIsAdmin(true);
+          setShowPinPrompt(false);
+        }}
       />
     </AppContext.Provider>
   );
