@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import {
+  Text,
+  TextInput,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type Props = NativeStackScreenProps<any>;
@@ -9,7 +17,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminPin, setAdminPin] = useState(''); // For fremtidig admin-funksjonalitet
+  const [adminPin, setAdminPin] = useState('');
 
   const handleRegister = async () => {
     if (!username || !email || !password || !phone || !adminPin) {
@@ -35,9 +43,7 @@ export default function RegisterScreen({ navigation }: Props) {
     try {
       const response = await fetch('http://192.168.11.224:3000/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username,
           email,
@@ -46,14 +52,14 @@ export default function RegisterScreen({ navigation }: Props) {
           admin_pin: adminPin,
         }),
       });
+
       const data = await response.json();
-      if (!response.ok) { 
+      if (!response.ok) {
         Alert.alert('Feil', data.error || 'Noe gikk galt. Prøv igjen.');
         return;
       }
 
       Alert.alert('Suksess', 'Brukeren er registrert!');
-      console.log("Naviger til Login");
       navigation.navigate('Login');
     } catch (error) {
       Alert.alert('Feil', 'Noe gikk galt. Prøv igjen.');
@@ -61,20 +67,115 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Registrer bruker</Text>
-      <TextInput placeholder="Brukernavn" value={username} onChangeText={setUsername} style={styles.input} />
-      <TextInput placeholder="Mobilnummer" value={phone} onChangeText={setPhone} style={styles.input} />
-      <TextInput placeholder="E-post" value={email} onChangeText={setEmail} style={styles.input} />
-      <TextInput placeholder="Passord" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
-      <TextInput placeholder="Admin PIN (4 siffer)" value={adminPin} onChangeText={setAdminPin} keyboardType="numeric" maxLength={4} secureTextEntry style={styles.input} />
-      <Button title="Registrer" onPress={handleRegister} />
-    </View>
+    <LinearGradient
+      colors={['#fcdada', '#c7ecfa']}
+      style={styles.gradient}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>🧑‍🚀 Registrering!</Text>
+        <Text style={styles.subtitle}>Lag en konto for å administrere hjemmet!</Text>
+
+        <TextInput
+          placeholder="Brukernavn"
+          value={username}
+          onChangeText={setUsername}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Mobilnummer (+47...)"
+          value={phone}
+          onChangeText={setPhone}
+          style={styles.input}
+          keyboardType="phone-pad"
+        />
+        <TextInput
+          placeholder="E-post"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          keyboardType="email-address"
+        />
+        <TextInput
+          placeholder="Passord"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Admin PIN (4 siffer)"
+          value={adminPin}
+          onChangeText={setAdminPin}
+          keyboardType="numeric"
+          maxLength={4}
+          secureTextEntry
+          style={styles.input}
+        />
+
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+          <Text style={styles.buttonText}>🚀 REGISTRER</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Login')}
+          style={styles.backButton}
+        >
+          <Text style={styles.backText}>⬅️ Gå tilbake til innlogging</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  input: { borderWidth: 1, marginBottom: 10, padding: 10, borderRadius: 5 },
-  title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
+  gradient: {
+    flex: 1,
+  },
+  container: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#b71c1c',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#444',
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+  input: {
+    width: '90%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
+    backgroundColor: '#fff',
+  },
+  registerButton: {
+    backgroundColor: '#d32f2f',
+    padding: 14,
+    width: '90%',
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  backButton: {
+    marginTop: 20,
+  },
+  backText: {
+    color: '#000',
+    fontSize: 14,
+  },
 });
