@@ -7,10 +7,13 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { v4 as uuidv4 } from 'uuid'; // npm install uuid + npm install --save-dev @types/uuid
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -22,10 +25,10 @@ export default function AdminScreen({ navigation }: Props) {
   const [code, setCode] = useState('');
   const [selectedColor, setSelectedColor] = useState(availableColors[0]);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (name.trim() && code.length === 4) {
-      addMember({
-        id: uuidv4(),
+
+      const newMemberData = {
         name,
         code,
         money: 0,
@@ -34,11 +37,27 @@ export default function AdminScreen({ navigation }: Props) {
           type: 'pinnefigur',
           color: selectedColor,
         },
-      });
+      };
+
+      try {
+        const docRef = await addDoc(collection(db, 'members'), newMemberData);
+
+        const newMember = {
+          id: docRef.id,
+          ...newMemberData,
+        };
+
+        addMember(newMember);
+
       setName('');
       setCode('');
+      setSelectedColor(availableColors[0]);
+      } catch (error) {
+        console.error('Feil ved å legge til medlem:', error);
+        Alert.alert('Noe gikk galt. Vennligst prøv igjen.');
+      }
     } else {
-      alert('Navn og 4-sifret kode er påkrevd');
+      Alert.alert('Navn og 4-sifret kode er påkrevd');
     }
   };
 
@@ -47,7 +66,7 @@ export default function AdminScreen({ navigation }: Props) {
       style={styles.memberItem}
       onPress={() => {
         // Senere: Naviger til oppgavebehandling
-        alert(`Klikket på ${item.name}`);
+        Alert.alert(`Klikket på ${item.name}`);
       }}
     >
       <Text style={styles.memberName}>{item.name}</Text>

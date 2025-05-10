@@ -31,7 +31,7 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
     };
 
     return (
-        <Modal visible={visible} transparent animationType="fade">
+        <Modal visible={visible}  animationType="fade" transparent={false}>
             <View style={styles.overlay}>
                 <View style={styles.modal}>
                     <Text style={styles.title}>Admin PIN</Text>
