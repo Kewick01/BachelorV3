@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_user, UserMixin
 from firebase_config import auth, db
 from firebase_admin.auth import UserNotFoundError 
+from firebase_admin import auth as firebase_admin_auth
 
 login = Blueprint('login',__name__)
 
@@ -31,11 +32,15 @@ def login_api():
          user_data = user_ref.to_dict()
          user_obj = User(user_data['uid'], user_data['username'], user.email)
          login_user(user_obj)
+
+         custom_token = firebase_admin_auth.create_custom_token(user.uid)
+         
          return jsonify({
                 "message": "Bruker logget inn!",
                 "uid": user.uid,
                 "username": user_data['username'],
                 "email": user.email,
+                "firebaseToken": custom_token.decode('utf-8'),
          }), 200
     
     except UserNotFoundError:

@@ -10,6 +10,7 @@ import {
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
+import { authInstance} from '../firebase';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -31,6 +32,8 @@ export default function LoginScreen({ navigation }: Props) {
         Alert.alert('Feil', data.error || 'Innlogging feilet.');
         return;
       }
+
+      await authInstance.signInWithCustomToken(data.firebaseToken);
 
       Alert.alert('Suksess!', `Velkommen! ${data.username}`);
       setLoggedIn(true);

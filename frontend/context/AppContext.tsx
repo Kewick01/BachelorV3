@@ -54,13 +54,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
 
     try {
-      await db.collection('members').doc(updatedMember.id).update({
+      const memberRef = db.collection('members').doc(updatedMember.id);
+
+      const updateData: any = {
         name: updatedMember.name,
         code: updatedMember.code,
         money: updatedMember.money,
         tasks: updatedMember.tasks,
-        cosmetics: updatedMember.cosmetics,
-      });
+        cosmetics: updatedMember.cosmetics || [],
+      };
+
+      if (updatedMember.character &&
+        typeof updatedMember.character.type === 'string' &&
+        typeof updatedMember.character.color === 'string' 
+      ) {
+        updateData.character = {
+          type: updatedMember.character.type,
+          color: updatedMember.character.color,
+        };
+      }
+      await memberRef.update(updateData);
     } catch (error) {
       console.error('Feil ved oppdatering av medlem:', error);
     }
