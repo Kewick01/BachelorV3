@@ -1,6 +1,8 @@
-import axios from 'axios';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode} from 'react';
 import AdminPinPrompt from '../components/AdminPinPrompt';
+import { db, authInstance } from '../firebase';
+
 
 type Task = {
   id: string;
@@ -16,6 +18,10 @@ type Member = {
   money: number;
   cosmetics?: string[]; // Ny: kosmetiske elementer brukeren har kjøpt
   tasks: Task[];
+  character: {
+    type: string;
+    color: string;
+  };
 };
 
 type AppContextType = {
@@ -25,7 +31,9 @@ type AppContextType = {
   toggleAdmin: () => void;
   members: Member[];
   addMember: (member: Member) => void;
-  updateMember: (updatedMember: Member) => void; // Ny
+  updateMember: (updatedMember: Member) => void; 
+  deleteMember: (memberId: string) => void; 
+  getCurrentAdminId: () => string | null; 
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -38,22 +46,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
-
-    // Send til backend om ønskelig
-    axios.post('http://localhost:8000/add_member', member).catch((err) =>
-      console.error('Feil ved lagring av nytt medlem:', err)
-    );
   };
 
-  const updateMember = (updatedMember: Member) => {
+  const updateMember = async (updatedMember: Member) => {
     setMembers((prev) =>
       prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
     );
 
-    // Send til backend (eller bytt til Firestore her)
-    axios.post('http://localhost:8000/update_member', updatedMember).catch((err) =>
-      console.error('Feil ved oppdatering av medlem:', err)
-    );
+    try {
+      await db.collection('members').doc(updatedMember.id).update({
+        name: updatedMember.name,
+        code: updatedMember.code,
+        money: updatedMember.money,
+        tasks: updatedMember.tasks,
+        cosmetics: updatedMember.cosmetics,
+      });
+    } catch (error) {
+      console.error('Feil ved oppdatering av medlem:', error);
+    }
+  };
+
+  const deleteMember = async (memberId: string) => {
+    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+
+    try {
+      await db.collection('members').doc(memberId).delete();
+    } catch (error) {
+      console.error('Feil ved sletting av medlem:', error);
+    }
+  };
+
+  const getCurrentAdminId = () => {
+    return authInstance.currentUser ? authInstance.currentUser.uid : null;
   };
 
   const toggleAdmin = async () => {
@@ -63,6 +87,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setShowPinPrompt(true);
     }
   };
+
+  const fetchMembersForAdmin = async (adminId: string) => {
+    try {
+      const snapshot = await db
+        .collection('members')
+        .where('adminId', '==', adminId)
+        .get();
+
+      const fetchedMembers: Member[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Member[];
+
+      setMembers(fetchedMembers);
+    } catch (error) {
+      console.error('Feil ved henting av medlemmer:', error);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = authInstance.onAuthStateChanged(async(user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        await fetchMembersForAdmin(user.uid);
+      } else {
+        setIsLoggedIn(false);
+        setMembers([]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <AppContext.Provider
@@ -74,6 +130,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         members,
         addMember,
         updateMember,
+        deleteMember,
+        getCurrentAdminId
       }}
     >
       {children}
@@ -84,7 +142,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           setIsAdmin(true);
           setShowPinPrompt(false);
         }}
-      />
+      ></AdminPinPrompt>
     </AppContext.Provider>
   );
 };

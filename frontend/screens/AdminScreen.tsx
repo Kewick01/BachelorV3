@@ -12,21 +12,31 @@ import {
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { v4 as uuidv4 } from 'uuid'; // npm install uuid + npm install --save-dev @types/uuid
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { db, authInstance} from '../firebase';
+
 
 type Props = NativeStackScreenProps<any>;
 
 const availableColors = ['red', 'blue', 'green', 'yellow', 'orange', 'black', 'pink', 'purple'];
 
 export default function AdminScreen({ navigation }: Props) {
-  const { members, addMember } = useAppContext();
+  const { members, addMember, deleteMember, updateMember, getCurrentAdminId } = useAppContext();
+
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [selectedColor, setSelectedColor] = useState(availableColors[0]);
 
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberName, setEditingMemberName] = useState('');
+  const [editingColor, setEditingColor] = useState(availableColors[0]);
+
   const handleAdd = async () => {
     if (name.trim() && code.length === 4) {
+      const currentAdminId = getCurrentAdminId(); // Hent adminId fra den nåværende brukeren
+      if (!currentAdminId) {
+        Alert.alert('Ingen admin ID funnet. Vennligst logg inn som admin.');
+        return;
+      }
 
       const newMemberData = {
         name,
@@ -37,21 +47,20 @@ export default function AdminScreen({ navigation }: Props) {
           type: 'pinnefigur',
           color: selectedColor,
         },
+        adminId: currentAdminId, // Legg til adminId her
       };
 
       try {
-        const docRef = await addDoc(collection(db, 'members'), newMemberData);
+        const docRef = await db.collection('members').add(newMemberData);
 
         const newMember = {
           id: docRef.id,
           ...newMemberData,
         };
-
         addMember(newMember);
-
-      setName('');
-      setCode('');
-      setSelectedColor(availableColors[0]);
+        setName('');
+        setCode('');
+        setSelectedColor(availableColors[0]);
       } catch (error) {
         console.error('Feil ved å legge til medlem:', error);
         Alert.alert('Noe gikk galt. Vennligst prøv igjen.');
@@ -61,17 +70,97 @@ export default function AdminScreen({ navigation }: Props) {
     }
   };
 
-  const renderMember = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles.memberItem}
-      onPress={() => {
-  navigation.navigate('MemberDetail', { memberId: item.id });
-}}
+  const handleUpdate = () => {
+    if (!editingMemberId) return;
 
-    >
-      <Text style={styles.memberName}>{item.name}</Text>
-    </TouchableOpacity>
-  );
+    const member = members.find((m) => m.id === editingMemberId);
+    if (!member) return;
+
+    const updatedMember = {
+      ...member,
+      name: editingMemberName,
+      character: {
+        ...(member.character ?? {}),
+        color: editingColor,
+      },
+    };
+
+    updateMember(updatedMember);
+    setEditingMemberId(null);
+
+  };
+
+  const renderMember = ({ item }: any) => {
+    const isEditing = editingMemberId === item.id;
+
+    return (
+    <View style={styles.memberItem}>
+    {isEditing ? (
+    <>
+       <TextInput
+    value={editingMemberName}
+    onChangeText={setEditingMemberName}
+    style={styles.input}
+    />
+    <View style={styles.colorContainer}>
+      {availableColors.map((color) => (
+        <TouchableOpacity
+          key={color}
+          style={[
+            styles.colorCircle,
+            { backgroundColor: color },
+            editingColor === color && styles.selectedCircle,
+          ]}
+          onPress={() => setEditingColor(color)}
+        />
+      ))}
+    </View>
+    <Button title="Lagre endringer" onPress={handleUpdate} />
+    <Button
+      title="Avbryt"
+      color="gray"
+      onPress={() => setEditingMemberId(null)}
+      />
+      </>
+    ) : (
+      <>
+    <Text style={styles.memberName}>{item.name}</Text>
+    <View style ={{ flexDirection: 'row' }}>
+      <TouchableOpacity
+      onPress={() => {
+        setEditingMemberId(item.id);
+        setEditingMemberName(item.name);
+        setEditingColor(item.character.color || availableColors[0]);
+      }}
+      style={styles.editButton}
+      >
+        <Text style={{ color: 'blue' }}>Rediger</Text>
+      </TouchableOpacity>
+
+  <TouchableOpacity onPress={() => 
+    Alert.alert(
+      'Bekreft Sletting',
+      `Er du sikker på at du vil slette ${item.name}?`,
+      [
+        { text: 'Avbryt', style: 'cancel' },
+        {
+          text: 'Slett',
+          style: 'destructive',
+          onPress: () => deleteMember(item.id),
+        },
+      ])
+  }
+    style={styles.deleteButton}
+  >
+    <Text style={{ color: 'red' }}>Slett</Text>
+  </TouchableOpacity>
+  </View>
+  </>
+    )}
+    </View>
+    );
+  };
+
 
   return (
     <View style={styles.container}>
@@ -158,4 +247,22 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'black',
   },
+  deleteButton: {
+    marginTop: 5,
+    marginLeft: 5,
+    padding: 5,
+    backgroundColor: '#f8d7da',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  editButton: {
+    marginTop: 5,
+    marginRight: 5,
+    padding: 5,
+    backgroundColor: '#d1ecf1',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
 });
+
+
