@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -57,7 +58,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
             if (enteredCode === member.code) {
               setAuthenticated(true);
             } else {
-              alert('Feil kode');
+              Alert.alert('Feil kode');
             }
           }}
         />
@@ -81,9 +82,9 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
       //   cosmetics: member.cosmetics,
       // });
 
-      alert(`Du kjøpte ${item.name}!`);
+      Alert.alert(`Du kjøpte ${item.name}!`);
     } else {
-      alert('Ikke nok penger!');
+      Alert.alert('Ikke nok penger!');
     }
   };
 
