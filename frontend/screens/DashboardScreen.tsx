@@ -1,17 +1,38 @@
-import React from 'react';
-import { View, Text, StyleSheet, Button, FlatList, Switch, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Animated,
+  Dimensions,
+} from 'react-native';
 import axios from 'axios';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
+import StickmanFigure from '../components/StickmanFigure';
+import AdminPinPrompt from '../components/AdminPinPrompt';
+
+const predefinedPositions = [
+  { top: 80, left: 30 },
+  { top: 80, left: 200 },
+  { top: 240, left: 60 },
+  { top: 240, left: 230 },
+  { top: 400, left: 40 },
+  { top: 400, left: 210 },
+];
 
 type Props = NativeStackScreenProps<any>;
 
 export default function DashboardScreen({ navigation }: Props) {
   const { isAdmin, toggleAdmin, members } = useAppContext();
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://192.168.11.224:3000/logout', {}, { withCredentials: true });
+      await axios.post('http://10.0.0.8:3000/logout', {}, { withCredentials: true });
       Alert.alert('Du er logget ut!');
       navigation.replace('Login');
     } catch (error) {
@@ -20,133 +41,125 @@ export default function DashboardScreen({ navigation }: Props) {
     }
   };
 
-  const renderEmpty = () => {
-    if (isAdmin) return null;
+  const requestAdminAccess = () => {
+    setShowPinPrompt(true);
+  };
+
+  const renderMember = ({ item, index }: any) => {
+    const scale = new Animated.Value(1);
+    const position = predefinedPositions[index % predefinedPositions.length];
+
     return (
-      <Text style={styles.emptyText}>
-        Ingen medlemmer ennå. Gå til admin-modus for å legge til medlemmer.
-      </Text>
+      <Animated.View
+        style={[
+          styles.stickmanWrapper,
+          position,
+          { transform: [{ scale }] },
+        ]}
+        key={item.id}
+      >
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPressIn={() => Animated.spring(scale, { toValue: 1.15, useNativeDriver: true }).start()}
+          onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
+          onPress={() => navigation.navigate('MemberDetail', { memberId: item.id })}
+        >
+          <Text style={styles.nameTag}>{item.name}</Text>
+          <StickmanFigure color={item.character.color || 'gray'} />
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
-  
-  const renderMember = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles.memberBubble}
-      onPress={() => navigation.navigate('MemberDetail', { memberId: item.id })}
-    >
-      <StickFigure color={item.character.color || 'gray'} />
-      <Text style={styles.memberName}>{item.name}</Text>
-      <Text style={styles.level}>Level 1</Text>
-    </TouchableOpacity>
-  );
-
-  const StickFigure = ({color}: { color: string }) => (
-    <View style={stickStyles.container}>
-      <View style={[stickStyles.head, { backgroundColor: color }]} />
-      <View style={[stickStyles.body, { backgroundColor: color }]} />
-      <View style={stickStyles.limbsRow}>
-        <View style={[stickStyles.limb, { backgroundColor: color }]} />
-        <View style={[stickStyles.limb, { backgroundColor: color }]} />
-      </View>
-      <View style={stickStyles.limbsRow}>
-        <View style={[stickStyles.limb, { backgroundColor: color }]} />
-        <View style={[stickStyles.limb, { backgroundColor: color }]} />
-      </View>
-    </View>
-  );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Switch value={isAdmin} onValueChange={toggleAdmin} />
-        <Text>{isAdmin ? 'Admin-modus' : 'Bruker-modus'}</Text>
+    <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.container}>
+      <View style={styles.topBar}>
+        <Text style={styles.title}>🏠 Hjemmelobby</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.buttonText}>🚪 Logg ut</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-      {members.length === 0 ? (
-        renderEmpty()
-      ) : (
-        <FlatList
-          data={members}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMember}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      <View style={styles.floor}>
+        {members.length > 0 ? (
+          members.map((member, index) => renderMember({ item: member, index }))
+        ) : (
+          <Text style={styles.emptyText}>Ingen medlemmer ennå. Trykk på knappen under for å legge til.</Text>
+        )}
+      </View>
 
-      {isAdmin && (
-        <View style={styles.buttonSpacing}>
-        <Button
-          title="Gå til Admin-verktøy"
-          onPress={() => navigation.navigate('Admin')}
-          color="#1E90FF"
-        />
-        </View>
-      )}
-</View>
+      <TouchableOpacity style={styles.adminButton} onPress={requestAdminAccess}>
+        <Text style={styles.buttonText}>⚙️ Gå til Admin-verktøy</Text>
+      </TouchableOpacity>
 
-    <View style={styles.logoutContainer}>
-  <Button title="Logg ut" onPress={handleLogout} color="#FF6347" />
-  </View>
-  </View>
+      <AdminPinPrompt
+        visible={showPinPrompt}
+        onCancel={() => setShowPinPrompt(false)}
+        onSuccess={() => {
+          setShowPinPrompt(false);
+          navigation.navigate('Admin');
+        }}
+      />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'space-between', },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  emptyText: { textAlign: 'center', fontSize: 16, color: '#666', marginTop: 50,},
-  list: { gap: 10, flexGrow: 1,},
-  memberBubble: {
-    padding: 20,
-    borderWidth: 1,
-    borderRadius: 100,
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-  },
-  memberName: { fontSize: 16 },
-  level: { fontSize: 12, color: '#888' },
-  logoutContainer: {
-    marginTop: 20,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  buttonSpacing: {
-    marginTop: 20,
-  },
-  
-});
-
-const stickStyles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    marginBottom: 10,
+    flex: 1,
   },
-  head: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginBottom: 4,
-  },
-  body: {
-    width: 6,
-    height: 40,
-    borderRadius: 3,
-    marginBottom: 4,
-  },
-  limbsRow: {
+  topBar: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 40,
-    marginBottom: 4,
+    alignItems: 'center',
   },
-  limb: {
-    width: 6,
-    height: 20,
-    borderRadius: 3,
+  title: {
+    fontSize: 24,
+    fontFamily: 'monospace',
+    color: '#b71c1c',
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#c62828',
+    padding: 10,
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+  },
+  floor: {
+    flex: 1,
+    position: 'relative',
+    paddingBottom: 60,
+    paddingTop: 20,
+  },
+  stickmanWrapper: {
+    position: 'absolute',
+    alignItems: 'center',
+  },
+  nameTag: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 6,
+    fontFamily: 'monospace',
+    textAlign: 'center',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 60,
+    fontFamily: 'monospace',
+    color: '#555',
+  },
+  adminButton: {
+    backgroundColor: '#1976d2',
+    padding: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
 });
-
-

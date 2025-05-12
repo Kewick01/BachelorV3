@@ -1,25 +1,22 @@
 import React, { useState } from 'react';
 import {
   View,
-  ScrollView,
   Text,
   TextInput,
-  Button,
-  FlatList,
+  Alert,
   StyleSheet,
   TouchableOpacity,
-  Alert,
+  FlatList,
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { v4 as uuidv4 } from 'uuid'; // npm install uuid + npm install --save-dev @types/uuid
-import { db, authInstance} from '../firebase';
-import StickmanFigure from '../components/StickmanFigure'; // Importer din komponent for pinnefigur
-
+import { db } from '../firebase';
+import StickmanFigure from '../components/StickmanFigure';
+import LinearGradient from 'react-native-linear-gradient';
 
 type Props = NativeStackScreenProps<any>;
 
-const availableColors = ['red', 'blue', 'green', 'yellow', 'orange', 'black', 'pink', 'purple'];
+const availableColors = ['red', 'blue', 'green', 'yellow', 'orange', 'black', 'purple'];
 
 export default function AdminScreen({ navigation }: Props) {
   const { members, addMember, deleteMember, updateMember, getCurrentAdminId } = useAppContext();
@@ -27,6 +24,7 @@ export default function AdminScreen({ navigation }: Props) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [selectedColor, setSelectedColor] = useState(availableColors[0]);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberName, setEditingMemberName] = useState('');
@@ -34,7 +32,7 @@ export default function AdminScreen({ navigation }: Props) {
 
   const handleAdd = async () => {
     if (name.trim() && code.length === 4) {
-      const currentAdminId = getCurrentAdminId(); // Hent adminId fra den nåværende brukeren
+      const currentAdminId = getCurrentAdminId();
       if (!currentAdminId) {
         Alert.alert('Ingen admin ID funnet. Vennligst logg inn som admin.');
         return;
@@ -49,12 +47,11 @@ export default function AdminScreen({ navigation }: Props) {
           type: 'pinnefigur',
           color: selectedColor,
         },
-        adminId: currentAdminId, // Legg til adminId her
+        adminId: currentAdminId,
       };
 
       try {
         const docRef = await db.collection('members').add(newMemberData);
-
         const newMember = {
           id: docRef.id,
           ...newMemberData,
@@ -63,6 +60,7 @@ export default function AdminScreen({ navigation }: Props) {
         setName('');
         setCode('');
         setSelectedColor(availableColors[0]);
+        setShowAddForm(false); // skjuler skjema etter lagring
       } catch (error) {
         console.error('Feil ved å legge til medlem:', error);
         Alert.alert('Noe gikk galt. Vennligst prøv igjen.');
@@ -89,197 +87,266 @@ export default function AdminScreen({ navigation }: Props) {
 
     updateMember(updatedMember);
     setEditingMemberId(null);
-
   };
 
   const renderMember = ({ item }: any) => {
     const isEditing = editingMemberId === item.id;
 
     return (
-    <View style={styles.memberItem}>
-    {isEditing ? (
-    <>
-       <TextInput
-    value={editingMemberName}
-    onChangeText={setEditingMemberName}
-    style={styles.input}
-    />
-    <View style={styles.colorContainer}>
-      {availableColors.map((color) => (
-        <TouchableOpacity
-          key={color}
-          style={[
-            styles.colorCircle,
-            { backgroundColor: color },
-            editingColor === color && styles.selectedCircle,
-          ]}
-          onPress={() => setEditingColor(color)}
-        />
-      ))}
-    </View>
+      <View style={styles.memberItem}>
+        {isEditing ? (
+          <>
+            <TextInput
+              value={editingMemberName}
+              onChangeText={setEditingMemberName}
+              style={styles.input}
+            />
+            <View style={styles.colorContainer}>
+              {availableColors.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.editColorCircle,
+                    { backgroundColor: color },
+                    editingColor === color && styles.selectedCircle,
+                  ]}
+                  onPress={() => setEditingColor(color)}
+                />
+              ))}
+            </View>
 
-    <View style={{ alignItems: 'center', marginVertical: 10 }}>
-      <StickmanFigure color={editingColor} />
-    </View>
+            <View style={{ alignItems: 'center', marginVertical: 10 }}>
+              <StickmanFigure color={editingColor} />
+            </View>
 
-    <Button title="Lagre endringer" onPress={handleUpdate} />
-    <Button
-      title="Avbryt"
-      color="gray"
-      onPress={() => setEditingMemberId(null)}
-      />
-      </>
-    ) : (
-      <>
-    <Text style={styles.memberName}>{item.name}</Text>
-    <View style ={{ flexDirection: 'row' }}>
-      <TouchableOpacity
-      onPress={() => {
-        setEditingMemberId(item.id);
-        setEditingMemberName(item.name);
-        setEditingColor(item.character.color || availableColors[0]);
-      }}
-      style={styles.editButton}
-      >
-        <Text style={{ color: 'blue' }}>Rediger</Text>
-      </TouchableOpacity>
+            <TouchableOpacity style={styles.primaryButton} onPress={handleUpdate}>
+              <Text style={styles.buttonText}>Lagre endringer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { marginTop: 10 }]}
+              onPress={() => setEditingMemberId(null)}
+            >
+              <Text style={styles.buttonText}>Avbryt</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.memberName}>{item.name}</Text>
+            <View style={{ flexDirection: 'row', marginTop: 8 }}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                  setEditingMemberId(item.id);
+                  setEditingMemberName(item.name);
+                  setEditingColor(item.character.color || availableColors[0]);
+                }}
+              >
+                <Text style={{ color: 'blue' }}>✏️ Rediger</Text>
+              </TouchableOpacity>
 
-  <TouchableOpacity onPress={() => 
-    Alert.alert(
-      'Bekreft Sletting',
-      `Er du sikker på at du vil slette ${item.name}?`,
-      [
-        { text: 'Avbryt', style: 'cancel' },
-        {
-          text: 'Slett',
-          style: 'destructive',
-          onPress: () => deleteMember(item.id),
-        },
-      ])
-  }
-    style={styles.deleteButton}
-  >
-    <Text style={{ color: 'red' }}>Slett</Text>
-  </TouchableOpacity>
-  </View>
-  </>
-    )}
-    </View>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() =>
+                  Alert.alert(
+                    'Bekreft Sletting',
+                    `Er du sikker på at du vil slette ${item.name}?`,
+                    [
+                      { text: 'Avbryt', style: 'cancel' },
+                      {
+                        text: 'Slett',
+                        style: 'destructive',
+                        onPress: () => deleteMember(item.id),
+                      },
+                    ]
+                  )
+                }
+              >
+                <Text style={{ color: 'red' }}>🗑️ Slett</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
     );
   };
 
-
   return (
+    <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.gradient}>
       <FlatList
         data={members}
         keyExtractor={(item) => item.id}
         renderItem={renderMember}
-        contentContainerStyle={{ gap: 10 }}
+        contentContainerStyle={styles.container}
         ListHeaderComponent={
           <>
-          <Text style={styles.title}>Adminpanel</Text>
-          <Text style={styles.subtitle}>Medlemmer:</Text>
+            <Text style={styles.title}>Adminpanel</Text>
+            <Text style={styles.subtitle}>Medlemmer:</Text>
           </>
         }
         ListFooterComponent={
-        <>
-        <Text style={styles.subtitle}>Legg til nytt medlem:</Text>
-        <TextInput
-        placeholder="Navn"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
+          <>
+            {!showAddForm ? (
+              <TouchableOpacity
+                style={[styles.primaryButton, { marginVertical: 20 }]}
+                onPress={() => setShowAddForm(true)}
+              >
+                <Text style={styles.buttonText}>➕ Legg til nytt medlem</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.memberItem}>
+                <Text style={styles.subtitle}>➕ Legg til nytt medlem:</Text>
+                <TextInput
+                  placeholder="Navn"
+                  value={name}
+                  onChangeText={setName}
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                />
+                <TextInput
+                  placeholder="4-sifret kode til medlemmet"
+                  value={code}
+                  onChangeText={setCode}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                />
+                <Text style={styles.subtitle}>🎨 Velg farge:</Text>
+                <View style={styles.colorContainer}>
+                  {availableColors.map((color) => (
+                    <TouchableOpacity
+                      key={color}
+                      style={[
+                        styles.colorCircle,
+                        { backgroundColor: color },
+                        selectedColor === color && styles.selectedCircle,
+                      ]}
+                      onPress={() => setSelectedColor(color)}
+                    />
+                  ))}
+                </View>
+
+                <View style={{ alignItems: 'center', marginVertical: 20 }}>
+                  <StickmanFigure color={selectedColor} />
+                </View>
+
+                <TouchableOpacity style={styles.primaryButton} onPress={handleAdd}>
+                  <Text style={styles.buttonText}>➕ Legg til</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.secondaryButton, { marginTop: 10 }]}
+                  onPress={() => setShowAddForm(false)}
+                >
+                  <Text style={styles.buttonText}>Avbryt</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.secondaryButton, { marginBottom: 30 }]}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.buttonText}>⬅️ Tilbake til Dashboard</Text>
+            </TouchableOpacity>
+          </>
+        }
       />
-      <TextInput
-        placeholder="4-sifret kode"
-        value={code}
-        onChangeText={setCode}
-        keyboardType="number-pad"
-        maxLength={4}
-        style={styles.input}
-      />
-      <Text style={styles.subtitle}>Velg farge på karakteren din:</Text>
-      <View style={styles.colorContainer}>
-        {availableColors.map((color) =>(
-          <TouchableOpacity
-          key = {color}
-          style={[
-            styles.colorCircle,
-            {backgroundColor: color },
-            selectedColor === color && styles.selectedCircle,
-          ]}
-          onPress={() => setSelectedColor(color)}
-          />
-        ))}
-      </View>
-
-        <View style = {{ alignItems: 'center', marginVertical: 20 }}>
-         <StickmanFigure color={selectedColor} />
-        </View>
-
-      <Button title="Legg til" onPress={handleAdd} />
-
-
-      <View style={{ marginTop: 20 }}>
-        <Button title="Tilbake til Dashboard" onPress={() => navigation.goBack()} />
-      </View>
-      </>
-      }
-      />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  subtitle: { fontSize: 18, marginTop: 20, marginBottom: 10 },
+  gradient: { flex: 1 },
+  container: {
+    padding: 20,
+    paddingBottom: 40,
+    gap: 12,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    fontFamily: 'monospace',
+    color: '#b71c1c',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 18,
+    fontFamily: 'monospace',
+    marginVertical: 10,
+  },
   input: {
     borderWidth: 1,
-    borderRadius: 5,
+    borderRadius: 12,
     padding: 10,
+    backgroundColor: '#fff',
     marginBottom: 10,
+    fontFamily: 'monospace',
   },
   memberItem: {
-    padding: 10,
+    padding: 15,
     borderWidth: 1,
-    borderRadius: 10,
-    backgroundColor: '#f2f2f2',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    marginBottom: 10,
   },
   memberName: {
-    fontSize: 16,
+    fontSize: 18,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
   },
   colorContainer: {
     flexDirection: 'row',
-    marginVertical: 10,
+    flexWrap: 'wrap',
     gap: 10,
+    marginVertical: 10,
   },
   colorCircle: {
-    width: 40,
-    height: 40,
+    width: 39,
+    height: 39,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#ccc',
   },
-  selectedCircle: {
-    borderWidth: 2,
-    borderColor: 'black',
+  editColorCircle: {
+    width: 35,
+    height: 35,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
-  deleteButton: {
-    marginTop: 5,
-    marginLeft: 5,
-    padding: 5,
-    backgroundColor: '#f8d7da',
-    borderRadius: 5,
-    alignItems: 'center',
+  selectedCircle: {
+    borderWidth: 3,
+    borderColor: '#000',
   },
   editButton: {
-    marginTop: 5,
-    marginRight: 5,
-    padding: 5,
-    backgroundColor: '#d1ecf1',
-    borderRadius: 5,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#e3f2fd',
+    marginRight: 10,
+  },
+  deleteButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#ffebee',
+  },
+  primaryButton: {
+    backgroundColor: '#b71c1c',
+    padding: 14,
+    borderRadius: 12,
     alignItems: 'center',
   },
+  secondaryButton: {
+    backgroundColor: '#42a5f5',
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontFamily: 'monospace',
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
-
-
