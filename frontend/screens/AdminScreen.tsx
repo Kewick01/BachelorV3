@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View,
+  ScrollView,
   Text,
   TextInput,
   Button,
@@ -13,6 +14,7 @@ import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { v4 as uuidv4 } from 'uuid'; // npm install uuid + npm install --save-dev @types/uuid
 import { db, authInstance} from '../firebase';
+import StickmanFigure from '../components/StickmanFigure'; // Importer din komponent for pinnefigur
 
 
 type Props = NativeStackScreenProps<any>;
@@ -115,6 +117,11 @@ export default function AdminScreen({ navigation }: Props) {
         />
       ))}
     </View>
+
+    <View style={{ alignItems: 'center', marginVertical: 10 }}>
+      <StickmanFigure color={editingColor} />
+    </View>
+
     <Button title="Lagre endringer" onPress={handleUpdate} />
     <Button
       title="Avbryt"
@@ -163,19 +170,21 @@ export default function AdminScreen({ navigation }: Props) {
 
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Adminpanel</Text>
-
-      <Text style={styles.subtitle}>Medlemmer:</Text>
       <FlatList
         data={members}
         keyExtractor={(item) => item.id}
         renderItem={renderMember}
         contentContainerStyle={{ gap: 10 }}
-      />
-
-      <Text style={styles.subtitle}>Legg til nytt medlem:</Text>
-      <TextInput
+        ListHeaderComponent={
+          <>
+          <Text style={styles.title}>Adminpanel</Text>
+          <Text style={styles.subtitle}>Medlemmer:</Text>
+          </>
+        }
+        ListFooterComponent={
+        <>
+        <Text style={styles.subtitle}>Legg til nytt medlem:</Text>
+        <TextInput
         placeholder="Navn"
         value={name}
         onChangeText={setName}
@@ -203,12 +212,20 @@ export default function AdminScreen({ navigation }: Props) {
           />
         ))}
       </View>
+
+        <View style = {{ alignItems: 'center', marginVertical: 20 }}>
+         <StickmanFigure color={selectedColor} />
+        </View>
+
       <Button title="Legg til" onPress={handleAdd} />
+
 
       <View style={{ marginTop: 20 }}>
         <Button title="Tilbake til Dashboard" onPress={() => navigation.goBack()} />
       </View>
-    </View>
+      </>
+      }
+      />
   );
 }
 
