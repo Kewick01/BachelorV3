@@ -23,7 +23,7 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
   const handleConfirm = async () => {
     try {
       const response = await axios.post(
-        "http://10.0.0.8:3000/verify-pin",
+        "http://192.168.11.224:3000/verify-pin",
         { pin },
         { withCredentials: true }
       );

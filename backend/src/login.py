@@ -47,3 +47,10 @@ def login_api():
         return jsonify({"error": "Bruker finnes ikke!"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def verify_firebase_token(id_token: str):
+    try:
+        decoded_token = firebase_admin_auth.verify_id_token(id_token)
+        return decoded_token
+    except Exception as e:
+        return ValueError(f"Ugyldig token: {e}")

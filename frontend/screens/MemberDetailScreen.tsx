@@ -12,6 +12,7 @@ import {
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
+import { authInstance } from '../firebase';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -33,7 +34,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
   const [authenticated, setAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'shop'>('tasks');
 
-  if (!member) {
+  if (!memberId || !member) {
     return (
       <View style={styles.center}>
         <Text style={styles.title}>Medlem ikke funnet</Text>
@@ -72,15 +73,37 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const handlePurchase = (item: { id: string; name: string; price: number }) => {
-    if (member.money >= item.price) {
-      member.money -= item.price;
-      member.cosmetics = [...(member.cosmetics || []), item.name];
-      updateMember(member);
+  const handlePurchase = async (item: { id: string; name: string; price: number }) => {
+    try {
+      const token = await authInstance.currentUser?.getIdToken();
+
+      const res = await fetch("http://192.168.11.224:3000/purchase", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          token,
+          item
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+      const updatedMember = {
+        ...member,
+        money: data.newMoney,
+        cosmetics : data.newCosmetics,
+      };
+
+      updateMember(updatedMember);
       Alert.alert(`Du kjøpte ${item.name}!`);
     } else {
-      Alert.alert('Ikke nok penger!');
+      Alert.alert(data.error ||'Ikke nok penger!');
     }
+  } catch (error) {
+    console.error('Feil ved kjøp:', error);
+    Alert.alert('Feil', 'Noe gikk galt med kjøpet. Vennligst prøv igjen.');
+  }
   };
 
   return (

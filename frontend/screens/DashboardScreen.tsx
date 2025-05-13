@@ -32,7 +32,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://10.0.0.8:3000/logout', {}, { withCredentials: true });
+      await axios.post('http://192.168.11.224:3000/logout', {}, { withCredentials: true });
       Alert.alert('Du er logget ut!');
       navigation.replace('Login');
     } catch (error) {

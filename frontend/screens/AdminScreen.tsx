@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { db } from '../firebase';
+import { authInstance, db } from '../firebase';
 import StickmanFigure from '../components/StickmanFigure';
 import LinearGradient from 'react-native-linear-gradient';
+import { v4 as uuidv4 } from 'uuid';
+import { FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -31,43 +33,64 @@ export default function AdminScreen({ navigation }: Props) {
   const [editingColor, setEditingColor] = useState(availableColors[0]);
 
   const handleAdd = async () => {
+  console.log("==> KJØRER handleAdd");
+  console.log("Navn:", name);
+  console.log("Kode:", code);
     if (name.trim() && code.length === 4) {
-      const currentAdminId = getCurrentAdminId();
-      if (!currentAdminId) {
-        Alert.alert('Ingen admin ID funnet. Vennligst logg inn som admin.');
-        return;
-      }
+      try{
+        const token = await authInstance.currentUser?.getIdToken();
 
-      const newMemberData = {
-        name,
-        code,
-        money: 0,
-        tasks: [],
-        character: {
-          type: 'pinnefigur',
-          color: selectedColor,
+        const response = await fetch('http://192.168.11.224:3000/create-member', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        adminId: currentAdminId,
-      };
+        body: JSON.stringify({
+          name,
+          code,
+          color: selectedColor,
+        }),
+      });
+      
+      const data = await response.json();
 
-      try {
-        const docRef = await db.collection('members').add(newMemberData);
+      if (!response.ok) {
+        console.log("Feil fra backend:", data);
+      Alert.alert("Feil", data.error || "Klarte ikke legge til medlem.");
+      return;
+    }
+        
+    console.log("Medlem lagt til via backend:", data);
+
         const newMember = {
-          id: docRef.id,
-          ...newMemberData,
+          id: data.id,
+          name,
+          code,
+          money: 0,
+          tasks: [],
+          cosmetics: [],
+          character: {
+            type: "pinnefigur",
+            color: selectedColor,
+          },
         };
+
         addMember(newMember);
-        setName('');
-        setCode('');
+        setName("");
+        setCode("");
         setSelectedColor(availableColors[0]);
-        setShowAddForm(false); // skjuler skjema etter lagring
+        setShowAddForm(false);
+
+        Alert.alert("Suksess!", "Medlem ble lagt til.");
       } catch (error) {
-        console.error('Feil ved å legge til medlem:', error);
-        Alert.alert('Noe gikk galt. Vennligst prøv igjen.');
+        console.error("Feil ved oppretting:", error);
+        Alert.alert("Feil", "Noe gikk galt ved oppretting av medlem.");
       }
     } else {
-      Alert.alert('Navn og 4-sifret kode er påkrevd');
+      Alert.alert("Navn og 4-sifret kode er påkrevd");
     }
+
   };
 
   const handleUpdate = () => {

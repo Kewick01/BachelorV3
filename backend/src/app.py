@@ -3,20 +3,21 @@ from flask import Flask, redirect
 from flask_login import LoginManager, UserMixin
 from flask_cors import CORS
 from azure.storage.blob import BlobServiceClient
-from flask_login import LoginManager
 from login import User
-
 from firebase_config import db, auth
-
 from login import login
 from logout import logout
 from register import register
 from home import home
 from admin import admin
+from purchase import purchase
+
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "default_secret_key")
+
+app.register_blueprint(purchase)
 
 #Hvis vi vil koble til Azure Storage for filhåndtering
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")

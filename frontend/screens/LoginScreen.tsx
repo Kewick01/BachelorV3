@@ -11,6 +11,7 @@ import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import { authInstance} from '../firebase';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -30,10 +31,27 @@ export default function LoginScreen({ navigation }: Props) {
       const data = await response.json();
       if (!response.ok) {
         Alert.alert('Feil', data.error || 'Innlogging feilet.');
+        console.log('backend error:', data);
         return;
       }
 
       await authInstance.signInWithCustomToken(data.firebaseToken);
+
+      const firebaseUser = await new Promise<FirebaseAuthTypes.User>((resolve, reject) => {
+        const unsubscribe = authInstance.onAuthStateChanged((user) => {
+          unsubscribe();
+      if (user) {
+            resolve(user);
+          }
+          else {
+            reject(new Error('Ingen bruker funnet.'));
+          }
+        }
+        );
+      }
+      );
+
+      console.log('firebase login OK. UID:', firebaseUser.uid);
 
       Alert.alert('Suksess!', `Velkommen! ${data.username}`);
       setLoggedIn(true);

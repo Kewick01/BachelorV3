@@ -1,7 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, } from 'react';
+import { Alert } from 'react-native';
 import AdminPinPrompt from '../components/AdminPinPrompt';
-import { db, authInstance } from '../firebase';
+import { authInstance } from '../firebase';
 
 
 type Task = {
@@ -54,28 +55,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
 
     try {
-      const memberRef = db.collection('members').doc(updatedMember.id);
-
-      const updateData: any = {
-        name: updatedMember.name,
-        code: updatedMember.code,
-        money: updatedMember.money,
-        tasks: updatedMember.tasks,
-        cosmetics: updatedMember.cosmetics || [],
-      };
-
-      if (updatedMember.character &&
-        typeof updatedMember.character.type === 'string' &&
-        typeof updatedMember.character.color === 'string' 
-      ) {
-        updateData.character = {
-          type: updatedMember.character.type,
+      const token = await authInstance.currentUser?.getIdToken();
+      const res = await fetch(`http://192.168.11.224:3000/update-member/${updatedMember.id}`,{
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: updatedMember.name,
           color: updatedMember.character.color,
-        };
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Oppdatering feilet:', data);
+        Alert.alert('Feil', data.error || 'Klarte ikke oppdatere medlem.');
+      } else {
+        console.log('Oppdatering OK:', data);
+        Alert.alert("Suksess", "Medlem ble oppdatert!");
       }
-      await memberRef.update(updateData);
     } catch (error) {
-      console.error('Feil ved oppdatering av medlem:', error);
+      console.error('Feil ved oppdatering:', error);
+      Alert.alert('Feil', 'Noe gikk galt ved oppdatering.');
     }
   };
 
@@ -83,9 +86,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
 
     try {
-      await db.collection('members').doc(memberId).delete();
-    } catch (error) {
-      console.error('Feil ved sletting av medlem:', error);
+      const token = await authInstance.currentUser?.getIdToken();
+
+      const res = await fetch(`http://192.168.11.224:3000/delete-member/${memberId}`,{
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Sletting feilet:', data);
+        Alert.alert('Feil', data.error || 'Klarte ikke slette medlem.');
+      } else {
+        console.log('Medlem slettet:', memberId);
+      }
+
+      } catch (error) {
+        console.error('Feil ved sletting av medlem:', error);
+        Alert.alert('Feil', 'Noe gikk galt ved sletting.');
     }
   };
 
@@ -103,19 +122,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchMembersForAdmin = async (adminId: string) => {
     try {
-      const snapshot = await db
-        .collection('members')
-        .where('adminId', '==', adminId)
-        .get();
+      const token = await authInstance.currentUser?.getIdToken();
+      const res = await fetch(`http://192.168.11.224:3000/members`, {
+        headers: {
+          Autorization: `Bearer ${token}`,
+        },
+      });
 
-      const fetchedMembers: Member[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Member[];
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Feil ved henting av medlemmer:', data);
+        Alert.alert('Feil', data.error || 'Kunne ikke hente medlemmer');
+        return;
+      }
 
-      setMembers(fetchedMembers);
+      setMembers(data);
     } catch (error) {
-      console.error('Feil ved henting av medlemmer:', error);
+      console.error('Feil ved henting:', error);
+      Alert.alert('Feil', 'Noe gikk galt ved henting av medlemmer');
     }
   };
 
