@@ -139,7 +139,7 @@ export default function AdminScreen({ navigation }: Props) {
             </View>
 
             <View style={{ alignItems: 'center', marginVertical: 10 }}>
-              <StickmanFigure color={editingColor} />
+              <StickmanFigure color={editingColor} accessories={[]} />
             </View>
 
             <TouchableOpacity style={styles.primaryButton} onPress={handleUpdate}>
@@ -250,7 +250,7 @@ export default function AdminScreen({ navigation }: Props) {
                 </View>
 
                 <View style={{ alignItems: 'center', marginVertical: 20 }}>
-                  <StickmanFigure color={selectedColor} />
+                  <StickmanFigure color={selectedColor} accessories={[]} />
                 </View>
 
                 <TouchableOpacity style={styles.primaryButton} onPress={handleAdd}>

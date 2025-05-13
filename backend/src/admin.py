@@ -99,7 +99,7 @@ def update_member(member_id):
     try:
         data = request.get_json()
         name = data.get('name')
-        color = data.get('color')
+        color = data.get('color')   
 
         if not name or not color:
             return jsonify({"error": "Alle felt er påkrevd!"}), 400

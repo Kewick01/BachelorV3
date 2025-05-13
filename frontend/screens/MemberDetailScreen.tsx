@@ -7,14 +7,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import { authInstance } from '../firebase';
+import StickmanFigure from '../components/StickmanFigure';
 
-type Props = NativeStackScreenProps<any>;
+type RootStackParamList = {
+  MemberDetailScreen: {memberId: string};
+};
+
+type Props = NativeStackScreenProps<RootStackParamList, 'MemberDetailScreen'>;
 
 const shopItems = [
   { id: '1', name: '🎩 Hatt', price: 3 },
@@ -42,6 +46,66 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const equipped = member.equippedCosmetics || [];
+
+  const handlePurchase = async (item: { id: string; name: string; price: number}) => {
+    try {
+      const token = await authInstance.currentUser?.getIdToken();
+
+      const res = await fetch("http://192.168.11.224:3000/purchase", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token, item}),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const updatedMember = {
+          ...member, 
+          money: data.new_money,
+          cosmetics: data.new_cosmetics,
+        };
+        updateMember(updatedMember);
+        Alert.alert(data.error || 'Ikke nok penger!');
+       }
+    } catch (error) {
+      console.error('Feil ved kjøp:', error);
+      Alert.alert('Feil', 'Noe gikk galt med kjøpet.');
+    }
+  };
+
+  const toggleEquip = (itemId: string) => {
+    const current = member.equippedCosmetics || [];
+    const updated = current.includes(itemId)
+    ? current.filter((id) => id !== itemId)
+    : [...current, itemId];
+
+    const updatedMember = {
+      ...member,
+      equippedCosmetics: updated,
+    };
+    updateMember(updatedMember);
+  };
+
+  const handleSell = (itemId: string) => {
+    const price = shopItems.find(i => i.id === itemId)?.price || 0;
+    const updatedCosmetics = (member.cosmetics || []).filter((id) => id !== itemId);
+    const updatedEquipped = (member.equippedCosmetics || []).filter((id) => id !== itemId);
+    const updatedMoney = member.money + price;
+
+    const updatedMember = {
+      ...member,
+      cosmetics: updatedCosmetics,
+      equippedCosmetics: updatedEquipped,
+      money: updatedMoney,
+    };
+    updateMember(updatedMember);
+    Alert.alert("Varen ble solgt!");
+  };
+
   if (!authenticated) {
     return (
       <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.gradient}>
@@ -65,53 +129,21 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
           }}>
             <Text style={styles.buttonText}>Lås opp</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => navigation.goBack()}>
-            <Text style={styles.buttonText}>Tilbake</Text>
-          </TouchableOpacity>
         </View>
       </LinearGradient>
     );
   }
 
-  const handlePurchase = async (item: { id: string; name: string; price: number }) => {
-    try {
-      const token = await authInstance.currentUser?.getIdToken();
-
-      const res = await fetch("http://192.168.11.224:3000/purchase", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          token,
-          item
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-      const updatedMember = {
-        ...member,
-        money: data.newMoney,
-        cosmetics : data.newCosmetics,
-      };
-
-      updateMember(updatedMember);
-      Alert.alert(`Du kjøpte ${item.name}!`);
-    } else {
-      Alert.alert(data.error ||'Ikke nok penger!');
-    }
-  } catch (error) {
-    console.error('Feil ved kjøp:', error);
-    Alert.alert('Feil', 'Noe gikk galt med kjøpet. Vennligst prøv igjen.');
-  }
-  };
-
   return (
     <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.gradient}>
-      <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>{member.name}</Text>
           <Text style={styles.subtitle}>💰 {member.money} kr</Text>
+
+          <StickmanFigure
+          color={member.character.color}
+          accessories={member.equippedCosmetics || []}
+          />
 
           <View style={styles.tabs}>
             <TouchableOpacity onPress={() => setActiveTab('tasks')}>
@@ -135,32 +167,45 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
               )
             ) : (
               <View style={styles.shopGrid}>
-                {shopItems.map((item) => (
+                {shopItems.map((item) => {
+                  const ownsItem = member.cosmetics?.includes(item.id);
+                  const isEquipped = equipped.includes(item.id);
+
+                  return (
                   <View key={item.id} style={styles.shopItem}>
                     <Text style={styles.shopName}>{item.name}</Text>
                     <Text style={styles.shopPrice}>{item.price} kr</Text>
+
+                    {!ownsItem ? (
                     <TouchableOpacity
                       style={styles.buyButton}
                       onPress={() => handlePurchase(item)}
                     >
                       <Text style={styles.buyText}>Kjøp</Text>
                     </TouchableOpacity>
+                    ) : (
+                      <>
+                      <TouchableOpacity
+                      style={[styles.buyButton, { backgroundColor: '#90caf9', marginBottom: 4}]}
+                      onPress={() => toggleEquip(item.id)}
+                      >
+                        <Text style= {styles.buyText}>{isEquipped ? 'Ta av' : 'Ta på'}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                      style={(styles.buyButton, { backgroundColor: '#ef9a9a'})}
+                      onPress={() => handleSell(item.id)}
+                      >
+                        <Text style={styles.buyText}>Selg</Text>
+                      </TouchableOpacity>
+                      </>
+                    )}
                   </View>
-                ))}
+                  );
+                })}
               </View>
             )}
           </View>
         </ScrollView>
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.buttonText}>⬅️ Tilbake til Dashboard</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </LinearGradient>
   );
 }

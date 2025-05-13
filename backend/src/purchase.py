@@ -17,13 +17,13 @@ def purchase_item():
         decoded_token = verify_firebase_token(token)
         uid = decoded_token["uid"]
 
-        member_ref = db.collection('members').document(uid)
-        doc = member_ref.get()
+        member_query = db.collection('members').where('adminId', '==', uid).limit(1).stream()
+        member_doc = next(member_query, None)
 
-        if not doc.exists:
+        if not member_doc:
             return jsonify({"error": "Bruker finnes ikke!"}), 404
         
-        member = doc.to_dict()
+        member = member_doc.to_dict()
 
         if member["money"] < item["price"]:
             return jsonify({"error": "Ikke nok penger!"}), 400
@@ -31,7 +31,7 @@ def purchase_item():
         new_money = member["money"] - item["price"]
         new_cosmetics = list(set(member.get("cosmetics", []) + [item["id"]]))
 
-        member_ref.update({
+        db.collection('members').document(member_doc.id).update({
             "money": new_money,
             "cosmetics": new_cosmetics
         })

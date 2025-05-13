@@ -65,7 +65,7 @@ export default function DashboardScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('MemberDetail', { memberId: item.id })}
         >
           <Text style={styles.nameTag}>{item.name}</Text>
-          <StickmanFigure color={item.character.color || 'gray'} />
+          <StickmanFigure color={item.character.color || 'gray'} accessories={[]}/>
         </TouchableOpacity>
       </Animated.View>
     );

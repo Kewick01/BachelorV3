@@ -19,6 +19,7 @@ type Member = {
   money: number;
   cosmetics?: string[]; // Ny: kosmetiske elementer brukeren har kjøpt
   tasks: Task[];
+  equippedCosmetics?: string[];
   character: {
     type: string;
     color: string;
@@ -65,6 +66,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({
           name: updatedMember.name,
           color: updatedMember.character.color,
+          money: updatedMember.money,
+          character: updatedMember.character,
+          cosmetics: updatedMember.cosmetics,
+          equippedCosmetics: updatedMember.equippedCosmetics,
+          tasks: updatedMember.tasks,
         })
       });
 
