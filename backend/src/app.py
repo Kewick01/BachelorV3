@@ -8,7 +8,6 @@ from firebase_config import db, auth
 from login import login
 from logout import logout
 from register import register
-from home import home
 from admin import admin
 from purchase import purchase
 
@@ -29,9 +28,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 app.register_blueprint(login)
-app.register_blueprint(logout) #Litt usikker på om vi trenger en egen logout, men tar den med her
+app.register_blueprint(logout) 
 app.register_blueprint(register)
-app.register_blueprint(home)
 app.register_blueprint(admin)
 
 class User(UserMixin):
