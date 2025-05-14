@@ -66,15 +66,16 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ token, item}),
+        body: JSON.stringify({ token, item, memberId}),
       });
 
       const data = await res.json();
       console.log("Respons fra backend", data);
 
       if (res.ok) {
+        const memberCopy = JSON.parse(JSON.stringify(member));
         const updatedMember = {
-          ...member, 
+          ...memberCopy, 
           money: data.new_money,
           cosmetics: data.new_cosmetics,
         };
@@ -95,8 +96,9 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     ? current.filter((id) => id !== itemId)
     : [...current, itemId];
 
+    const memberCopy = JSON.parse(JSON.stringify(member));
     const updatedMember = {
-      ...member,
+      ...memberCopy,
       equippedCosmetics: updated,
     };
     updateMember(updatedMember, true);
@@ -108,8 +110,9 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     const updatedEquipped = (member.equippedCosmetics || []).filter((id) => id !== itemId);
     const updatedMoney = member.money + price;
 
+    const memberCopy = JSON.parse(JSON.stringify(member));
     const updatedMember = {
-      ...member,
+      ...memberCopy,
       cosmetics: updatedCosmetics,
       equippedCosmetics: updatedEquipped,
       money: updatedMoney,

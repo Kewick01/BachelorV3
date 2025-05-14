@@ -54,7 +54,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateMember = async (updatedMember: Member, silent: boolean = false) => {
     setMembers((prev) =>
-      prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+      prev.map((m) => m.id === updatedMember.id ? JSON.parse(JSON.stringify(updatedMember)) : m)
     );
 
     try {

@@ -10,20 +10,26 @@ def purchase_item():
         data = request.get_json()
         token = data.get('token')
         item = data.get('item')
+        member_id = data.get('memberId')
 
         if not token or not item:
-            return jsonify({"error": "Token og vare er påkrevd!"}), 400
+            return jsonify({"error": "Token og vare er påkrevd!"}), 401
+        
+        item["price"] = float(item["price"])
         
         decoded_token = verify_firebase_token(token)
         uid = decoded_token["uid"]
 
-        member_query = db.collection('members').where('adminId', '==', uid).limit(1).stream()
-        member_doc = next(member_query, None)
+        member_ref = db.collection('members').document(member_id)
+        member_doc = member_ref.get()
 
-        if not member_doc:
+        if not member_doc.exists:
             return jsonify({"error": "Bruker finnes ikke!"}), 404
         
         member = member_doc.to_dict()
+
+        if member.get("adminId") !=uid:
+            return jsonify({"error": "Ingen tilgang til dette medlemmet"}), 403
 
         if member["money"] < item["price"]:
             return jsonify({"error": "Ikke nok penger!"}), 400
