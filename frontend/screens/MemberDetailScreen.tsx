@@ -10,15 +10,13 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
 import LinearGradient from 'react-native-linear-gradient';
 import { authInstance } from '../firebase';
 import StickmanFigure from '../components/StickmanFigure';
+import { useEffect } from 'react';
 
-type RootStackParamList = {
-  MemberDetailScreen: {memberId: string};
-};
-
-type Props = NativeStackScreenProps<RootStackParamList, 'MemberDetailScreen'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'MemberDetail'>;
 
 const shopItems = [
   { id: '1', name: '🎩 Hatt', price: 3 },
@@ -31,12 +29,17 @@ const shopItems = [
 
 export default function MemberDetailScreen({ route, navigation }: Props) {
   const { memberId } = route.params;
-  const { members, updateMember } = useAppContext();
+  const { refreshMember } = useAppContext();
+  const { members, updateMember, completeTask } = useAppContext();
   const member = members.find((m) => m.id === memberId);
 
   const [enteredCode, setEnteredCode] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'shop'>('tasks');
+
+  useEffect(() => {
+    refreshMember(memberId);
+  }, [memberId]);
 
   if (!memberId || !member) {
     return (
@@ -50,7 +53,13 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
 
   const handlePurchase = async (item: { id: string; name: string; price: number}) => {
     try {
+      console.log("Kjører handlePurchase", item);
+
       const token = await authInstance.currentUser?.getIdToken();
+      if (!token) {
+        Alert.alert("Ingen token funnet!");
+        return;
+      }
 
       const res = await fetch("http://192.168.11.224:3000/purchase", {
         method: 'POST',
@@ -61,6 +70,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
       });
 
       const data = await res.json();
+      console.log("Respons fra backend", data);
 
       if (res.ok) {
         const updatedMember = {
@@ -69,7 +79,9 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
           cosmetics: data.new_cosmetics,
         };
         updateMember(updatedMember);
-        Alert.alert(data.error || 'Ikke nok penger!');
+        Alert.alert(`Du kjøpte ${item.name}!`);
+       } else {
+        Alert.alert(data.error || "Feil ved kjøp.");
        }
     } catch (error) {
       console.error('Feil ved kjøp:', error);
@@ -158,9 +170,19 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
             {activeTab === 'tasks' ? (
               member.tasks.length > 0 ? (
                 member.tasks.map((task) => (
-                  <Text key={task.id} style={styles.taskText}>
-                    {task.title} - {task.completed ? '✅' : `${task.price} kr`}
+                  <View key={task.id} style={{ marginBottom: 8}}>
+                  <Text style={styles.taskText}>
+                    {task.title} - {task.completed === true ? '✅' : `${task.price} kr`}
                   </Text>
+                  {!task.completed && (
+                    <TouchableOpacity
+                    onPress={() => completeTask(member.id, task.id)}
+                    style={[styles.buyButton, { backgroundColor: '#aed581', marginTop: 5}]}
+                    >
+                      <Text style={styles.buyText}>Fullført</Text>
+                    </TouchableOpacity>
+                  )}
+                  </View>
                 ))
               ) : (
                 <Text style={styles.taskText}>Tomt for oppgaver.</Text>

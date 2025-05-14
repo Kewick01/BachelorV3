@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import StickmanFigure from '../components/StickmanFigure';
 import AdminPinPrompt from '../components/AdminPinPrompt';
 
+
 const predefinedPositions = [
   { top: 80, left: 30 },
   { top: 80, left: 200 },
@@ -46,6 +47,9 @@ export default function DashboardScreen({ navigation }: Props) {
   };
 
   const renderMember = ({ item, index }: any) => {
+    if (!item.id) {
+      console.warn("Medlem mangler ID:", item)
+    }
     const scale = new Animated.Value(1);
     const position = predefinedPositions[index % predefinedPositions.length];
 
@@ -62,7 +66,10 @@ export default function DashboardScreen({ navigation }: Props) {
           activeOpacity={0.8}
           onPressIn={() => Animated.spring(scale, { toValue: 1.15, useNativeDriver: true }).start()}
           onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
-          onPress={() => navigation.navigate('MemberDetail', { memberId: item.id })}
+          onPress={() => {
+            console.log("Navigerer til Memberdetail med medlem:", item);
+            navigation.navigate('MemberDetail', { memberId: item.id });
+          }}
         >
           <Text style={styles.nameTag}>{item.name}</Text>
           <StickmanFigure color={item.character.color || 'gray'} accessories={[]}/>

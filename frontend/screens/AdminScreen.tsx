@@ -64,7 +64,7 @@ export default function AdminScreen({ navigation }: Props) {
     console.log("Medlem lagt til via backend:", data);
 
         const newMember = {
-          id: data.id,
+          id: data.member_id,
           name,
           code,
           money: 0,
@@ -185,6 +185,13 @@ export default function AdminScreen({ navigation }: Props) {
                 }
               >
                 <Text style={{ color: 'red' }}>🗑️ Slett</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => navigation.navigate('AddTask', { memberId: item.id})}
+              >
+                <Text style={{color: 'green'}}>🧹 Legg til oppgave</Text>
               </TouchableOpacity>
             </View>
           </>

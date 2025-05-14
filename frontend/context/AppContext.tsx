@@ -36,6 +36,8 @@ type AppContextType = {
   updateMember: (updatedMember: Member) => void; 
   deleteMember: (memberId: string) => void; 
   getCurrentAdminId: () => string | null; 
+  refreshMember: (memberId: string) => Promise<void>;
+  completeTask: (memberId: string, taskId: string) => Promise<void>;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,13 +67,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         },
         body: JSON.stringify({
           name: updatedMember.name,
-          color: updatedMember.character.color,
           money: updatedMember.money,
-          character: updatedMember.character,
+          tasks: updatedMember.tasks,
           cosmetics: updatedMember.cosmetics,
           equippedCosmetics: updatedMember.equippedCosmetics,
-          tasks: updatedMember.tasks,
-        })
+          character: {
+            type: updatedMember.character.type,
+            color: updatedMember.character.color,
+          },
+        }),
       });
 
       const data = await res.json();
@@ -113,6 +117,48 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         Alert.alert('Feil', 'Noe gikk galt ved sletting.');
     }
   };
+
+  const refreshMember = async (memberId: string) => {
+    const token = await authInstance.currentUser?.getIdToken();
+    const res = await  fetch(`http://192.168.11.224:3000/member/${memberId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      data.id = memberId;
+      setMembers((prev) => prev.map((m) => m.id === memberId ? data : m));
+    }
+  };
+
+  const completeTask = async (memberId: string, taskId: string) => {
+    try {
+      const token = await authInstance.currentUser?.getIdToken();
+
+      const res = await  fetch(`http://192.168.11.224:3000/complete-task/${memberId}/${taskId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setMembers(prev =>
+          prev.map(m =>
+            m.id === memberId ? {...m, tasks: data.UpdatedMember.tasks, money: data.UpdatedMember.money} : m 
+      )
+    );
+  } else {
+    console.error('Fullføring feilet:', data);
+    Alert.alert('Feil', data.error || 'Klarte ikke fullføre oppgaven.')
+  }
+} catch (error) {
+  console.error('Feil ved fullføring av oppgave:', error);
+  Alert.alert('Feil', 'Noe gikk galt.');
+}
+}; 
 
   const getCurrentAdminId = () => {
     return authInstance.currentUser ? authInstance.currentUser.uid : null;
@@ -174,7 +220,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         addMember,
         updateMember,
         deleteMember,
-        getCurrentAdminId
+        getCurrentAdminId,
+        refreshMember,
+        completeTask,
       }}
     >
       {children}
