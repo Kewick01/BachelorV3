@@ -18,7 +18,7 @@ const StickmanFigure: React.FC<Props> = ({ color, accessories }) => (
 
          {/* 🎩 Hatt */}
         {accessories.includes('1') && (
-            <Circle cx="30" cy="10" r="6" fill="black" />
+            <Circle cx="30" cy="10" r="7" fill="black" />
         )}
         {/* 🕶️ Briller */}
         {accessories.includes('2') && (
@@ -26,13 +26,13 @@ const StickmanFigure: React.FC<Props> = ({ color, accessories }) => (
         )}
         {/* 👕 T-skjorte */}
          {accessories.includes('3') && (
-            <Rect x="20" y="20" width="20" height="15" fill="skyblue" />
+            <Rect x="20" y="35" width="20" height="15" fill="skyblue" />
         )}
         {/* 👖 Bukse */}
          {accessories.includes('4') && (
             <>
-            <Rect x="13" y="60" width="6" height="20" fill="blue" />
-            <Rect x="41" y="60" width="6" height="20" fill="blue" />
+            <Rect x="20" y="60" width="6" height="20" fill="blue" />
+            <Rect x="34" y="60" width="6" height="20" fill="blue" />
             </>
         )}
         {/* 🩳 Shorts */}
@@ -42,8 +42,8 @@ const StickmanFigure: React.FC<Props> = ({ color, accessories }) => (
         {/* 👟 Sko */}
          {accessories.includes('6') && (
             <>
-            <Rect x="11" y="80" width="8" height="5" fill="black" />
-            <Rect x="41" y="80" width="8" height="5" fill="black" />
+            <Rect x="11" y="80" width="10" height="5" fill="black" />
+            <Rect x="41" y="80" width="10" height="5" fill="black" />
             </>
         )}
         
