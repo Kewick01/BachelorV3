@@ -72,7 +72,8 @@ export default function DashboardScreen({ navigation }: Props) {
           }}
         >
           <Text style={styles.nameTag}>{item.name}</Text>
-          <StickmanFigure color={item.character.color || 'gray'} accessories={[]}/>
+          <StickmanFigure color={item.character.color || 'gray'} 
+          accessories={item.equippedCosmetics || []}/>
         </TouchableOpacity>
       </Animated.View>
     );

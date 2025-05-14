@@ -78,7 +78,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
           money: data.new_money,
           cosmetics: data.new_cosmetics,
         };
-        updateMember(updatedMember);
+        updateMember(updatedMember, true);
         Alert.alert(`Du kjøpte ${item.name}!`);
        } else {
         Alert.alert(data.error || "Feil ved kjøp.");
@@ -99,7 +99,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
       ...member,
       equippedCosmetics: updated,
     };
-    updateMember(updatedMember);
+    updateMember(updatedMember, true);
   };
 
   const handleSell = (itemId: string) => {
@@ -114,7 +114,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
       equippedCosmetics: updatedEquipped,
       money: updatedMoney,
     };
-    updateMember(updatedMember);
+    updateMember(updatedMember, true);
     Alert.alert("Varen ble solgt!");
   };
 
@@ -214,7 +214,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
                         <Text style= {styles.buyText}>{isEquipped ? 'Ta av' : 'Ta på'}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                      style={(styles.buyButton, { backgroundColor: '#ef9a9a'})}
+                      style={[styles.buyButton, { backgroundColor: '#e57373'}]}
                       onPress={() => handleSell(item.id)}
                       >
                         <Text style={styles.buyText}>Selg</Text>

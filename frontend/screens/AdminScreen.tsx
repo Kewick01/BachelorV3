@@ -188,7 +188,7 @@ export default function AdminScreen({ navigation }: Props) {
               </TouchableOpacity>
 
               <TouchableOpacity
-              style={styles.editButton}
+              style={styles.addButton}
               onPress={() => navigation.navigate('AddTask', { memberId: item.id})}
               >
                 <Text style={{color: 'green'}}>🧹 Legg til oppgave</Text>
@@ -378,5 +378,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  addButton: {
+    backgroundColor: '#c8e6c9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginLeft: 'auto',
   },
 });

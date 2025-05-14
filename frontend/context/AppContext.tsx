@@ -33,7 +33,7 @@ type AppContextType = {
   toggleAdmin: () => void;
   members: Member[];
   addMember: (member: Member) => void;
-  updateMember: (updatedMember: Member) => void; 
+  updateMember: (updatedMember: Member, silent?: boolean) => void; 
   deleteMember: (memberId: string) => void; 
   getCurrentAdminId: () => string | null; 
   refreshMember: (memberId: string) => Promise<void>;
@@ -52,7 +52,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setMembers((prev) => [...prev, member]);
   };
 
-  const updateMember = async (updatedMember: Member) => {
+  const updateMember = async (updatedMember: Member, silent: boolean = false) => {
     setMembers((prev) =>
       prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
     );
@@ -84,7 +84,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         Alert.alert('Feil', data.error || 'Klarte ikke oppdatere medlem.');
       } else {
         console.log('Oppdatering OK:', data);
+        if (!silent) {
         Alert.alert("Suksess", "Medlem ble oppdatert!");
+        }
       }
     } catch (error) {
       console.error('Feil ved oppdatering:', error);
