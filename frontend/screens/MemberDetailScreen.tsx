@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { authInstance } from '../firebase';
 import StickmanFigure from '../components/StickmanFigure';
 import { useEffect } from 'react';
+import AdminPinPrompt from '../components/AdminPinPrompt';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MemberDetail'>;
 
@@ -36,6 +37,8 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
   const [enteredCode, setEnteredCode] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'shop'>('tasks');
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState<string |null>(null);
 
   useEffect(() => {
     refreshMember(memberId);
@@ -176,7 +179,10 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
                   </Text>
                   {!task.completed && (
                     <TouchableOpacity
-                    onPress={() => completeTask(member.id, task.id)}
+                    onPress={() => {
+                      setTaskToComplete(task.id);
+                      setShowPinPrompt(true);
+                    }}
                     style={[styles.buyButton, { backgroundColor: '#aed581', marginTop: 5}]}
                     >
                       <Text style={styles.buyText}>Fullført</Text>
@@ -228,6 +234,23 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
             )}
           </View>
         </ScrollView>
+
+        <AdminPinPrompt
+        visible={showPinPrompt}
+        onCancel={() => {
+          setTaskToComplete(null);
+          setShowPinPrompt(false);
+        }}
+        onSuccess={async () => {
+          if (taskToComplete) {
+            await completeTask(member.id, taskToComplete);
+          }
+          setTaskToComplete(null);
+          setShowPinPrompt(false);
+        }}
+        />
+
+
     </LinearGradient>
   );
 }
