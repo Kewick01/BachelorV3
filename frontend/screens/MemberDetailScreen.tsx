@@ -55,7 +55,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     try {
       console.log("Kjører handlePurchase", item);
 
-      const token = await authInstance.currentUser?.getIdToken();
+      const token = await authInstance.currentUser?.getIdToken(true);
       if (!token) {
         Alert.alert("Ingen token funnet!");
         return;
@@ -64,26 +64,23 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
       const res = await fetch("http://192.168.11.224:3000/purchase", {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ token, item, memberId}),
+        body: JSON.stringify({
+          item: item,
+          memberId: member.id,
+        }),
       });
 
       const data = await res.json();
-      console.log("Respons fra backend", data);
-
-      if (res.ok) {
-        const memberCopy = JSON.parse(JSON.stringify(member));
-        const updatedMember = {
-          ...memberCopy, 
-          money: data.new_money,
-          cosmetics: data.new_cosmetics,
+      if (!res.ok) {
+        Alert.alert(data.error || "Kjøpet feilet.");
+        return;
         };
-        updateMember(updatedMember, true);
-        Alert.alert(`Du kjøpte ${item.name}!`);
-       } else {
-        Alert.alert(data.error || "Feil ved kjøp.");
-       }
+
+      Alert.alert(`Du kjøpte ${item.name} for ${item.price} kr!`);
+      await refreshMember(memberId);
     } catch (error) {
       console.error('Feil ved kjøp:', error);
       Alert.alert('Feil', 'Noe gikk galt med kjøpet.');

@@ -10,8 +10,7 @@ import {
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
-import { authInstance} from '../firebase';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -21,43 +20,28 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
 
   const handlelogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Feil', 'Fyll ut både e-post og passord')
+      return;
+    }
+
     try {
-      const response = await fetch('http://192.168.11.224:3000/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
 
-      const data = await response.json();
-      if (!response.ok) {
-        Alert.alert('Feil', data.error || 'Innlogging feilet.');
-        console.log('backend error:', data);
-        return;
-      }
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
 
-      await authInstance.signInWithCustomToken(data.firebaseToken);
+      const idToken = await user.getIdToken(true);
+      console.log('Bruker logget inn med uid', user.uid);
+      console.log('Token (kortet for sikkerhet):', idToken.substring(0,20), '...');
+      
 
-      const firebaseUser = await new Promise<FirebaseAuthTypes.User>((resolve, reject) => {
-        const unsubscribe = authInstance.onAuthStateChanged((user) => {
-          unsubscribe();
-      if (user) {
-            resolve(user);
-          }
-          else {
-            reject(new Error('Ingen bruker funnet.'));
-          }
-        }
-        );
-      }
-      );
-
-      console.log('firebase login OK. UID:', firebaseUser.uid);
-
-      Alert.alert('Suksess!', `Velkommen! ${data.username}`);
+      Alert.alert('Suksess!', `Velkommen! ${user.email}`);
       setLoggedIn(true);
+
+
       navigation.replace('Dashboard');
     } catch (error) {
-      Alert.alert('Feil', 'Noe gikk galt. Vennligst prøv igjen.');
+      Alert.alert('Feil E-mail eller passord!');
     }
   };
 

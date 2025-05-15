@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, } from 'react';
 import { Alert } from 'react-native';
 import AdminPinPrompt from '../components/AdminPinPrompt';
@@ -48,6 +47,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [showPinPrompt, setShowPinPrompt] = useState(false);
 
+  const getAuthHeader = async () => {
+    const token = await authInstance.currentUser?.getIdToken(true);
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  };
+
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
   };
@@ -58,13 +65,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
 
     try {
-      const token = await authInstance.currentUser?.getIdToken();
       const res = await fetch(`http://192.168.11.224:3000/update-member/${updatedMember.id}`,{
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: await getAuthHeader(),
         body: JSON.stringify({
           name: updatedMember.name,
           money: updatedMember.money,
@@ -98,7 +101,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
 
     try {
-      const token = await authInstance.currentUser?.getIdToken();
+      const token = await authInstance.currentUser?.getIdToken(true);
 
       const res = await fetch(`http://192.168.11.224:3000/delete-member/${memberId}`,{
         method: 'DELETE',
@@ -121,7 +124,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshMember = async (memberId: string) => {
-    const token = await authInstance.currentUser?.getIdToken();
+    const token = await authInstance.currentUser?.getIdToken(true);
     const res = await  fetch(`http://192.168.11.224:3000/member/${memberId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -136,7 +139,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const completeTask = async (memberId: string, taskId: string) => {
     try {
-      const token = await authInstance.currentUser?.getIdToken();
+      const token = await authInstance.currentUser?.getIdToken(true);
 
       const res = await  fetch(`http://192.168.11.224:3000/complete-task/${memberId}/${taskId}`, {
         method: 'POST',
@@ -176,10 +179,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchMembersForAdmin = async (adminId: string) => {
     try {
-      const token = await authInstance.currentUser?.getIdToken();
+      const token = await authInstance.currentUser?.getIdToken(true);
       const res = await fetch(`http://192.168.11.224:3000/members`, {
         headers: {
-          Autorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -201,7 +204,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = authInstance.onAuthStateChanged(async(user) => {
       if (user) {
         setIsLoggedIn(true);
-        await fetchMembersForAdmin(user.uid);
+        try {
+          const token = await user.getIdToken(true);
+          if (token) {
+            await fetchMembersForAdmin(user.uid);
+          }
+        } catch (e) {
+          console.warn("Kunne ikke hente token:", e);
+        }
+        
       } else {
         setIsLoggedIn(false);
         setMembers([]);

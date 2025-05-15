@@ -8,8 +8,8 @@ import {
   Alert,
   Modal,
 } from "react-native";
-import axios from "axios";
 import LinearGradient from "react-native-linear-gradient";
+import auth from "@react-native-firebase/auth";
 
 type Props = {
   visible: boolean;
@@ -22,13 +22,21 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
 
   const handleConfirm = async () => {
     try {
-      const response = await axios.post(
-        "http://192.168.11.224:3000/verify-pin",
-        { pin },
-        { withCredentials: true }
-      );
+      const token = await auth().currentUser?.getIdToken(true);
+      if (!token) throw new Error("Ingen innlogget bruker");
 
-      if (response.status === 200) {
+      const response = await fetch(
+        "http://192.168.11.224:3000/verify-pin", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ pin }),
+        });
+
+      const data = await response.json();  
+      if (response.ok) {
         onSuccess();
       } else {
         Alert.alert("Feil", "Ugyldig PIN. Prøv igjen.");

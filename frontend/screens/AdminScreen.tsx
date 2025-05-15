@@ -10,18 +10,16 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { authInstance, db } from '../firebase';
+import { authInstance } from '../firebase';
 import StickmanFigure from '../components/StickmanFigure';
 import LinearGradient from 'react-native-linear-gradient';
-import { v4 as uuidv4 } from 'uuid';
-import { FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 
 type Props = NativeStackScreenProps<any>;
 
 const availableColors = ['red', 'blue', 'green', 'yellow', 'orange', 'black', 'purple'];
 
 export default function AdminScreen({ navigation }: Props) {
-  const { members, addMember, deleteMember, updateMember, getCurrentAdminId } = useAppContext();
+  const { members, addMember, deleteMember, updateMember } = useAppContext();
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -33,12 +31,10 @@ export default function AdminScreen({ navigation }: Props) {
   const [editingColor, setEditingColor] = useState(availableColors[0]);
 
   const handleAdd = async () => {
-  console.log("==> KJØRER handleAdd");
-  console.log("Navn:", name);
-  console.log("Kode:", code);
     if (name.trim() && code.length === 4) {
       try{
-        const token = await authInstance.currentUser?.getIdToken();
+        const token = await authInstance.currentUser?.getIdToken(true);
+        if (!token) throw new Error('Token mangler');
 
         const response = await fetch('http://192.168.11.224:3000/create-member', {
         method: "POST",
@@ -60,8 +56,6 @@ export default function AdminScreen({ navigation }: Props) {
       Alert.alert("Feil", data.error || "Klarte ikke legge til medlem.");
       return;
     }
-        
-    console.log("Medlem lagt til via backend:", data);
 
         const newMember = {
           id: data.member_id,

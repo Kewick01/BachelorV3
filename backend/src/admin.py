@@ -1,22 +1,37 @@
 from flask import Blueprint, request, jsonify
-from flask_login import current_user, login_required
 from firebase_config import db
 from firebase_admin import firestore
+from auth import verify_firebase_token
 import uuid
 
 
 admin = Blueprint('admin', __name__)
 
+def get_uid_from_token():
+    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+    if not token:
+        return None, jsonify({"error": "Manglende token"}), 401
+    
+    try:
+        decoded = verify_firebase_token(token)
+        print(" Firebase UID:", decoded["uid"])
+        return decoded["uid"], None, None
+    except Exception as e:
+        print("Token verifisereing feilet:", e)
+        return None, jsonify({"error": "Ugyldig token"}), 401
+
 @admin.route('/verify-pin', methods=['POST'])
-@login_required
 def verify_admin_pin():
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     data = request.get_json()
     pin = data.get('pin')
 
     if not pin:
         return jsonify({"error": "PIN er påkrevd!"}), 400
     
-    user_doc = db.collection('users').document(current_user.id).get()
+    user_doc = db.collection('users').document(uid).get()
     if not user_doc.exists:
         return jsonify({"error": "Bruker ikke funnet!"}), 404
     
@@ -29,17 +44,19 @@ def verify_admin_pin():
         return jsonify({"error": "Ugyldig PIN!"}), 401
     
 @admin.route('/create-member', methods=['POST'])
-@login_required
 def create_member():
-        data = request.get_json()
-        name = data.get('name')
-        code = data.get('code')
-        color = data.get('color')
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
 
-        if not name or not code or not color:
-            return jsonify({"error": "Alle felt er påkrevd!"}), 400
+    data = request.get_json()
+    name = data.get('name')
+    code = data.get('code')
+    color = data.get('color')
+
+    if not name or not code or not color:
+        return jsonify({"error": "Alle felt er påkrevd!"}), 400
         
-        try:
+    try:
             member_data = {
                 "name": name,
                 "code": code,
@@ -49,19 +66,21 @@ def create_member():
                     "type": "pinnefigur",
                     "color": color,
             },
-            "adminId": current_user.id
+            "adminId": uid
             }
 
             doc_ref = db.collection('members').document()
             doc_ref.set(member_data)
 
             return jsonify({"message": "Medlem opprettet!", "member_id": doc_ref.id}), 201
-        except Exception as e:
+    except Exception as e:
             return jsonify({"error": str(e)}), 500
         
 @admin.route('/delete-member/<member_id>', methods=['DELETE'])
-@login_required
 def delete_member(member_id):
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     try:
         member_ref = db.collection('members').document(member_id)
         doc = member_ref.get()
@@ -69,7 +88,7 @@ def delete_member(member_id):
         if not doc.exists:
             return jsonify({"error": "Medlem ikke funnet!"}), 404
         
-        if doc.to_dict().get("adminId") != current_user.id:
+        if doc.to_dict().get("adminId") != uid:
             return jsonify({"error": "Ingen tilgang til å slette dette medlemmet."}), 403
         
         member_ref.delete()
@@ -79,10 +98,12 @@ def delete_member(member_id):
         return jsonify({"error": str(e)}), 500
     
 @admin.route('/members', methods=['GET'])
-@login_required
 def get_members():
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     try: 
-        snapshot = db.collection('members').where('adminId', '==', current_user.id).stream()
+        snapshot = db.collection('members').where('adminId', '==', uid).stream()
         members = []
 
         for doc in snapshot:
@@ -97,19 +118,19 @@ def get_members():
     
 
 @admin.route('/update-member/<member_id>', methods=['PUT'])
-@login_required
 def update_member(member_id):
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     try:
         data = request.get_json()
-
         allowed_fields = ['name', 'money', 'character', 'cosmetics', 'equippedCosmetics', 'tasks' ]
-
         member_ref = db.collection('members').document(member_id)
 
         doc = member_ref.get()
         if not doc.exists:
             return jsonify({"error": "Medlem ikke funnet!"}), 404
-        if doc.to_dict().get("adminId") != current_user.id:
+        if doc.to_dict().get("adminId") != uid:
             return jsonify({"error": "Ingen tilgang!"}), 403
         
         update_data = {}
@@ -135,8 +156,10 @@ def update_member(member_id):
         return jsonify({"Error": str(e)}), 500
     
 @admin.route('/add-task/<member_id>', methods=['POST'])
-@login_required
 def add_task(member_id):
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     data = request.get_json()
     title = data.get('title')
     price = data.get('price')
@@ -148,7 +171,7 @@ def add_task(member_id):
     doc = member_ref.get()
     if not doc.exists:
         return jsonify({"error": "Medlem ikke funnet!"}),404
-    if doc.to_dict().get("adminId") != current_user.id:
+    if doc.to_dict().get("adminId") != uid:
         return jsonify({"error": "Ingen tilgang!"}), 403
     
     new_task = {
@@ -165,8 +188,10 @@ def add_task(member_id):
     return jsonify({"message": "Oppgave lagt til!"}), 200
 
 @admin.route('/member/<member_id>', methods=['GET'])
-@login_required
 def get_member(member_id):
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     try:
         doc = db.collection('members').document(member_id).get()
         if not doc.exists:
@@ -174,7 +199,7 @@ def get_member(member_id):
         
         data = doc.to_dict()
 
-        if data.get("adminId") != current_user.id:
+        if data.get("adminId") != uid:
             return jsonify({"error": "Ingen tilgang!"}), 403
         
         return jsonify(data), 200
@@ -184,8 +209,10 @@ def get_member(member_id):
     
 
 @admin.route('/complete-task/<member_id>/<task_id>', methods=['POST'])
-@login_required
 def complete_task(member_id, task_id):
+    uid, error, code = get_uid_from_token()
+    if error: return error, code
+
     try:
         member_ref = db.collection('members').document(member_id)
         doc = member_ref.get()
@@ -193,6 +220,9 @@ def complete_task(member_id, task_id):
             return jsonify({"error": "Medlem ikke funnet!"}), 404
         
         member = doc.to_dict()
+        if member.get("adminId") != uid:
+            return jsonify({"error": "Ingen tilgang!"}), 403
+            
         tasks = member.get("tasks", [])
         updated_tasks = []
         added_money = 0

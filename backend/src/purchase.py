@@ -1,14 +1,20 @@
 from flask import Blueprint, request, jsonify
 from firebase_config import db
-from login import verify_firebase_token
+from auth import verify_firebase_token
 
 purchase = Blueprint('purchase', __name__)
 
 @purchase.route('/purchase', methods=['POST'])
 def purchase_item():
     try:
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not token:
+            return jsonify({"error": "Manglende token!"}), 401
+        
+        decoded_token = verify_firebase_token(token)
+        uid = decoded_token["uid"]
+
         data = request.get_json()
-        token = data.get('token')
         item = data.get('item')
         member_id = data.get('memberId')
 

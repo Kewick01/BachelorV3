@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import auth from '@react-native-firebase/auth';
+import { useAppContext } from '../context/AppContext';
 
 type Props = NativeStackScreenProps<any>;
 
@@ -41,6 +43,8 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     try {
+
+
       const response = await fetch('http://192.168.11.224:3000/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,10 +59,14 @@ export default function RegisterScreen({ navigation }: Props) {
 
       const data = await response.json();
       if (!response.ok) {
+        if (response.status === 409) {
+        Alert.alert('Feil', data.error || 'E-postadressen er allerede i bruk.');
+      } else {
         Alert.alert('Feil', data.error || 'Noe gikk galt. Prøv igjen.');
-        return;
+       }
+       return;
       }
-
+      
       Alert.alert('Suksess', 'Brukeren er registrert!');
       navigation.navigate('Login');
     } catch (error) {
@@ -103,7 +111,7 @@ export default function RegisterScreen({ navigation }: Props) {
           style={styles.input}
         />
         <TextInput
-          placeholder="Admin PIN (4 siffer)"
+          placeholder="PIN til administrering av medlemmer (4 siffer)"
           value={adminPin}
           onChangeText={setAdminPin}
           keyboardType="numeric"

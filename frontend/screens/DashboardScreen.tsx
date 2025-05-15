@@ -8,12 +8,12 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import axios from 'axios';
 import { useAppContext } from '../context/AppContext';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import StickmanFigure from '../components/StickmanFigure';
 import AdminPinPrompt from '../components/AdminPinPrompt';
+import auth from '@react-native-firebase/auth';
 
 
 const predefinedPositions = [
@@ -33,7 +33,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://192.168.11.224:3000/logout', {}, { withCredentials: true });
+      await auth().signOut();
       Alert.alert('Du er logget ut!');
       navigation.replace('Login');
     } catch (error) {

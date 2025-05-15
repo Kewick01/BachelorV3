@@ -16,13 +16,22 @@ export default function AddTaskScreen({ route, navigation}: Props) {
     const [price, setPrice] = useState('');
 
     const handleAddTask = async () => {
+        const numericPrice = Number(price);
+
         if (!title.trim() || !price) {
             Alert.alert("Fyll ut alle feltene!");
             return;
         }
 
+        if (isNaN(numericPrice) || numericPrice <= 0) {
+            Alert.alert("Ugyldig beløp", "Belønningen må være et positivt tall.");
+            return;
+        }
+
     try {
-        const token = await authInstance.currentUser?.getIdToken();
+        const token = await authInstance.currentUser?.getIdToken(true);
+        if (!token) throw new Error("Mangler gyldig token");
+
         const response = await fetch(`http://192.168.11.224:3000/add-task/${memberId}`, {
             method: 'POST',
             headers: {
@@ -37,7 +46,6 @@ export default function AddTaskScreen({ route, navigation}: Props) {
 
         const data = await response.json();
         if (!response.ok) {
-            console.error("Feil", data);
             Alert.alert("Feil", data.error || "Klarte ikke legge til oppgave.");
             return;
         }
