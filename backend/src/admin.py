@@ -1,24 +1,26 @@
-from flask import Blueprint, request, jsonify
-from firebase_config import db
-from firebase_admin import firestore
-from auth import verify_firebase_token
-import uuid
+# Importerer nødvendige moduler og funksjoner.
+from flask import Blueprint, request, jsonify # Flask-moduler for routing og HTTP-håndtering. 
+from firebase_config import db # Importerer Firebase-databasereferansen fra egen konfigurasjonsfil.
+from firebase_admin import firestore # Firestore-modul for spesifikke funksjoner.
+from auth import verify_firebase_token # Funksjon for å verifisere Firebase JWT-token. 
+import uuid # Brukes for å generere unike ID-er.
 
-
+# Oppretter et Flask Blueprint for for å gruppere admin-relaterte routes.
 admin = Blueprint('admin', __name__)
 
+# Funksjon for å hente UID fra token i header.
 def get_uid_from_token():
-    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+    token = request.headers.get('Authorization', '').replace('Bearer ', '') # Henter token fra Authorization-header.
     if not token:
-        return None, jsonify({"error": "Manglende token"}), 401
+        return None, jsonify({"error": "Manglende token"}), 401 # Returnerer feil hvis token mangler.
     
     try:
-        decoded = verify_firebase_token(token)
-        print(" Firebase UID:", decoded["uid"])
-        return decoded["uid"], None, None
+        decoded = verify_firebase_token(token) # Dekoder token og henter brukerinfo 
+        print(" Firebase UID:", decoded["uid"]) # Debug-utskrift av UID 
+        return decoded["uid"], None, None # Returnerer UID og ingen feil
     except Exception as e:
-        print("Token verifisereing feilet:", e)
-        return None, jsonify({"error": "Ugyldig token"}), 401
+        print("Token verifisereing feilet:", e) # Logger eventuelle feil
+        return None, jsonify({"error": "Ugyldig token"}), 401 # Returnerer feil ved ugyldig token
 
 @admin.route('/verify-pin', methods=['POST'])
 def verify_admin_pin():
