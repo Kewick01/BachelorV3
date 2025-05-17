@@ -1,27 +1,32 @@
+# admin.py - Denne file inneholder alle rutene for administrative funksjoner for applikasjonen.
+# Dette gjelder autentifisering, oppretting, sletting, oppdatering og visning av meldemmene.
+# Den bruker Firebase som database og er koblet til frontend gjennom et API-kall.
 # Importerer nødvendige moduler og funksjoner.
-from flask import Blueprint, request, jsonify # Flask-moduler for routing og HTTP-håndtering. 
-from firebase_config import db # Importerer Firebase-databasereferansen fra egen konfigurasjonsfil.
-from firebase_admin import firestore # Firestore-modul for spesifikke funksjoner.
-from auth import verify_firebase_token # Funksjon for å verifisere Firebase JWT-token. 
-import uuid # Brukes for å generere unike ID-er.
+from flask import Blueprint, request, jsonify # Flask-moduler for routing og HTTP-respons.
+from firebase_config import db                # Firebase Firestore-klienten.
+from firebase_admin import firestore          # Firebase-admin for spesielle operasjoner.
+from auth import verify_firebase_token        # Funksjon for å verifisere JWT-token fra Firebase.
+import uuid                                   # Genererer ulike ID-er.
 
 # Oppretter et Flask Blueprint for for å gruppere admin-relaterte routes.
 admin = Blueprint('admin', __name__)
 
 # Funksjon for å hente UID fra token i header.
+# UID blir returnert hvis token er gydlig, ellers blir det en feilmedling.
 def get_uid_from_token():
-    token = request.headers.get('Authorization', '').replace('Bearer ', '') # Henter token fra Authorization-header.
+    token = request.headers.get('Authorization', '').replace('Bearer ', '') 
     if not token:
-        return None, jsonify({"error": "Manglende token"}), 401 # Returnerer feil hvis token mangler.
+        return None, jsonify({"error": "Manglende token"}), 401 
     
     try:
-        decoded = verify_firebase_token(token) # Dekoder token og henter brukerinfo 
-        print(" Firebase UID:", decoded["uid"]) # Debug-utskrift av UID 
-        return decoded["uid"], None, None # Returnerer UID og ingen feil
+        decoded = verify_firebase_token(token) # Dekoder token og henter brukerinfo. 
+        print(" Firebase UID:", decoded["uid"]) # Debug-utskrift av UID. 
+        return decoded["uid"], None, None # Returnerer UID og ingen feil.
     except Exception as e:
-        print("Token verifisereing feilet:", e) # Logger eventuelle feil
-        return None, jsonify({"error": "Ugyldig token"}), 401 # Returnerer feil ved ugyldig token
+        print("Token verifisereing feilet:", e) # Logger eventuelle feil.
+        return None, jsonify({"error": "Ugyldig token"}), 401 # Returnerer feil ved ugyldig token.
 
+# Endepunkt: Verifiserer at admin-PIN stemmer med det som er lagert i databasen.
 @admin.route('/verify-pin', methods=['POST'])
 def verify_admin_pin():
     uid, error, code = get_uid_from_token()
@@ -44,7 +49,8 @@ def verify_admin_pin():
         return jsonify({"message": "PIN er gyldig!"}), 200
     else:
         return jsonify({"error": "Ugyldig PIN!"}), 401
-    
+
+# Endepunkt: Oppretter et nytt medlem knyttet til admin som er logget inn.     
 @admin.route('/create-member', methods=['POST'])
 def create_member():
     uid, error, code = get_uid_from_token()
@@ -65,19 +71,20 @@ def create_member():
                 "money": 0,
                 "tasks": [],
                 "character": {
-                    "type": "pinnefigur",
+                    "type": "pinnefigur", # Dette er en standard karaktertype som gjelder alle medlemmer.
                     "color": color,
             },
             "adminId": uid
             }
 
-            doc_ref = db.collection('members').document()
+            doc_ref = db.collection('members').document() # Her opprettes et nytt dokument med en tilfeldig ID.
             doc_ref.set(member_data)
 
             return jsonify({"message": "Medlem opprettet!", "member_id": doc_ref.id}), 201
     except Exception as e:
             return jsonify({"error": str(e)}), 500
-        
+
+# Endepunkt: Sletter et medlem som tilhører innlogget admin.        
 @admin.route('/delete-member/<member_id>', methods=['DELETE'])
 def delete_member(member_id):
     uid, error, code = get_uid_from_token()
@@ -98,7 +105,8 @@ def delete_member(member_id):
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+# Endepunkt: Henter alle medlemmene som tilhører innlogget admin.    
 @admin.route('/members', methods=['GET'])
 def get_members():
     uid, error, code = get_uid_from_token()
@@ -110,7 +118,7 @@ def get_members():
 
         for doc in snapshot:
             data = doc.to_dict()
-            data['id'] = doc.id
+            data['id'] = doc.id # Legger til ID til dokumentet i resultatet.
             members.append(data)
 
         return jsonify(members), 200
@@ -119,6 +127,7 @@ def get_members():
        return jsonify({"error": str(e)}), 500
     
 
+# Endepunkt: Oppdaterer informasjon om et spesifikt medlem.
 @admin.route('/update-member/<member_id>', methods=['PUT'])
 def update_member(member_id):
     uid, error, code = get_uid_from_token()
@@ -136,13 +145,15 @@ def update_member(member_id):
             return jsonify({"error": "Ingen tilgang!"}), 403
         
         update_data = {}
-
+        
+        # Egen håndtering for character-feltet.
         if 'color' in data:
             update_data["character.color"] = data['color']
         if 'character' in data and isinstance(data['character'], dict):
             for key, value in data['character'].items():
                 update_data[f"character.{key}"] = value
-
+        
+        # De andre feltene i oppdateringen.
         for field in allowed_fields:
             if field in data and field != 'character':
                 update_data[field] = data[field]
@@ -156,7 +167,8 @@ def update_member(member_id):
     
     except Exception as e:
         return jsonify({"Error": str(e)}), 500
-    
+
+# Endepunkt: Legger til en ny oppgave knyttet til et medlem.    
 @admin.route('/add-task/<member_id>', methods=['POST'])
 def add_task(member_id):
     uid, error, code = get_uid_from_token()
@@ -177,18 +189,20 @@ def add_task(member_id):
         return jsonify({"error": "Ingen tilgang!"}), 403
     
     new_task = {
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid4()), # Dette er en unik ID for hver oppgave som opprettes.
         "title": title,
         "price": price,
         "completed": False
     }
-
+    
+    # Her brukes ArrayUnion for å legge til en ny oppgave uten at den overskiver allerede eksisterende oppgaver.
     member_ref.update({
         "tasks": firestore.ArrayUnion([new_task])
     })
 
     return jsonify({"message": "Oppgave lagt til!"}), 200
 
+# Endepunkt: Henter informasjon for et spesifikt medlem.
 @admin.route('/member/<member_id>', methods=['GET'])
 def get_member(member_id):
     uid, error, code = get_uid_from_token()
@@ -210,6 +224,7 @@ def get_member(member_id):
         return jsonify({"error": str(e)}), 500
     
 
+# Endepunkt: Markerer en oppgave som fullført og øker saldoen til medlemmet.
 @admin.route('/complete-task/<member_id>/<task_id>', methods=['POST'])
 def complete_task(member_id, task_id):
     uid, error, code = get_uid_from_token()
@@ -228,7 +243,8 @@ def complete_task(member_id, task_id):
         tasks = member.get("tasks", [])
         updated_tasks = []
         added_money = 0
-
+        
+        # Går gjennom de ulike oppgavene som finnes og markerer riktig oppgave som fullført.
         for task in tasks:
             if task["id"] == task_id and not task.get("completed"):
                 task["completed"] = True

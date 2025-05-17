@@ -1,3 +1,7 @@
+// AppContext.tsx - Global kontekst for applikasjonen.
+// Håndterer innloggingssatus, medlemshåndtering, API-kall og admin-PIN.
+// Tilgjengelig i hele appen gjennom useAppContext().
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, } from 'react';
 import { Alert } from 'react-native';
 import AdminPinPrompt from '../components/AdminPinPrompt';
