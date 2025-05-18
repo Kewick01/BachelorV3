@@ -39,7 +39,7 @@ export default function AddTaskScreen({ route, navigation}: Props) {
         if (!token) throw new Error("Mangler gyldig token");
 
         // Sender POST-forespørsel til backend.
-        const response = await fetch(`http://192.168.11.224:3000/add-task/${memberId}`, {
+        const response = await fetch(`http://<DIN-IP-ELLER-HOST>:3000/add-task/${memberId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

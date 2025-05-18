@@ -50,7 +50,7 @@ export default function RegisterScreen({ navigation }: Props) {
 
     // Sender data til backend for å opprette brukeren.
     try {
-      const response = await fetch('http://192.168.11.224:3000/register', {
+      const response = await fetch('http://<DIN-IP-ELLER-HOST>:3000/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

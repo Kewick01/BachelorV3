@@ -78,7 +78,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
 
     try {
-      const res = await fetch(`http://192.168.11.224:3000/update-member/${updatedMember.id}`,{ // Dette er en privat IP-adresse.
+      const res = await fetch(`http://<DIN-IP-ELLER-HOST>/update-member/${updatedMember.id}`,{ // Her skal din private IP-adresse inn, har byttet den ut med tekst i henhold til personvern.
         method: 'PUT',
         headers: await getAuthHeader(),
         body: JSON.stringify({
@@ -117,7 +117,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       const token = await authInstance.currentUser?.getIdToken(true);
 
-      const res = await fetch(`http://192.168.11.224:3000/delete-member/${memberId}`,{
+      const res = await fetch(`http://<DIN-IP-ELLER-HOST>:3000/delete-member/${memberId}`,{
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -140,7 +140,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
    // Henter inn oppdatert informasjon om et medlem.
   const refreshMember = async (memberId: string) => {
     const token = await authInstance.currentUser?.getIdToken(true);
-    const res = await  fetch(`http://192.168.11.224:3000/member/${memberId}`, {
+    const res = await  fetch(`http://<DIN_IP_ELLER_HOST>:3000/member/${memberId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -157,7 +157,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       const token = await authInstance.currentUser?.getIdToken(true);
 
-      const res = await  fetch(`http://192.168.11.224:3000/complete-task/${memberId}/${taskId}`, {
+      const res = await  fetch(`http://<DIN-IP-ELLER-HOST>:3000/complete-task/${memberId}/${taskId}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -199,7 +199,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const fetchMembersForAdmin = async (adminId: string) => {
     try {
       const token = await authInstance.currentUser?.getIdToken(true);
-      const res = await fetch(`http://192.168.11.224:3000/members`, {
+      const res = await fetch(`http://<DIN-IP-ELLER-HOST>:3000/members`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

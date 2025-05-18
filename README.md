@@ -64,7 +64,7 @@ Andre teknologier:
 3. Innstaller krav:
    pip install -r requirements.txt
 
-4. Vi har brukt lokal IP-adresse for HTTP, så dette må evt byttes ut med din (Dette blir litt jobb da det er en del setder som fetcher IP-adressen)
+4. Vi har brukt lokal IP-adresse for HTTP, så dette må evt byttes ut med din. Har endre det til: "<DIN-IP-ELLER-HOST>" (Dette blir litt jobb da det er en del steder som fetcher IP-adressen).
 
 4. Start serveren:
    python app.py (Pass på at du er inne i src-mappa)
