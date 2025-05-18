@@ -8,6 +8,7 @@ import AdminPinPrompt from '../components/AdminPinPrompt';
 import { authInstance } from '../firebase';
 
 
+// Type for en oppgave knyttet til et medlem.
 type Task = {
   id: string;
   title: string;
@@ -15,20 +16,22 @@ type Task = {
   completed: boolean;
 };
 
+// Type for et medlem.
 type Member = {
   id: string;
   name: string;
   code: string;
   money: number;
-  cosmetics?: string[]; // Ny: kosmetiske elementer brukeren har kjøpt
+  cosmetics?: string[]; // Nye kosmetiske elementer brukeren har kjøpt.
   tasks: Task[];
-  equippedCosmetics?: string[];
+  equippedCosmetics?: string[]; // Valgte kosmetiske elementer.
   character: {
     type: string;
     color: string;
   };
 };
 
+// Typer for verdiene som gjøres tilgjengelig i applikasjonen via AppContext.
 type AppContextType = {
   isLoggedIn: boolean;
   setLoggedIn: (val: boolean) => void;
@@ -43,14 +46,17 @@ type AppContextType = {
   completeTask: (memberId: string, taskId: string) => Promise<void>;
 };
 
+// Oppretter en React-kontekst med en udefinert startverdi.
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Kontekst-Provider: Her settes verdiene som gjøres tilgjengelig via AppContext.
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [showPinPrompt, setShowPinPrompt] = useState(false);
-
+  
+  // Henter token fra Firebase og bygger header med autorisasjon.
   const getAuthHeader = async () => {
     const token = await authInstance.currentUser?.getIdToken(true);
     return {
@@ -58,18 +64,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       'Content-Type': 'application/json',
     };
   };
-
+  
+  // Legger til nytt medlem lokalt.
   const addMember = (member: Member) => {
     setMembers((prev) => [...prev, member]);
   };
-
+  
+  // Oppdaterer medlem lokalt og sender PUT-kall til backend.
+  // Dette er en HTTP-forespørsel som oppdaterer eller erstatter en eksisterende ressurs.
   const updateMember = async (updatedMember: Member, silent: boolean = false) => {
     setMembers((prev) =>
       prev.map((m) => m.id === updatedMember.id ? JSON.parse(JSON.stringify(updatedMember)) : m)
     );
 
     try {
-      const res = await fetch(`http://192.168.11.224:3000/update-member/${updatedMember.id}`,{
+      const res = await fetch(`http://192.168.11.224:3000/update-member/${updatedMember.id}`,{ // Dette er en privat IP-adresse.
         method: 'PUT',
         headers: await getAuthHeader(),
         body: JSON.stringify({
@@ -101,6 +110,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+   // Sletter et medlem lokalt og i backend.
   const deleteMember = async (memberId: string) => {
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
 
@@ -127,6 +137,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+   // Henter inn oppdatert informasjon om et medlem.
   const refreshMember = async (memberId: string) => {
     const token = await authInstance.currentUser?.getIdToken(true);
     const res = await  fetch(`http://192.168.11.224:3000/member/${memberId}`, {
@@ -141,6 +152,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Markerer en oppgave som fullført og oppdaterer pengene og oppgavelista knyttet til det spesifikke medlemmet.
   const completeTask = async (memberId: string, taskId: string) => {
     try {
       const token = await authInstance.currentUser?.getIdToken(true);
@@ -169,10 +181,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 }
 }; 
 
+  // Henter nåværende admin UID fra Firebase Auth.
   const getCurrentAdminId = () => {
     return authInstance.currentUser ? authInstance.currentUser.uid : null;
   };
 
+  // Veksler mellom admin og bruker gjennom PIN-popupen.
   const toggleAdmin = async () => {
     if (isAdmin) {
       setIsAdmin(false);
@@ -181,6 +195,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Henter opp alle medlemmene som er knyttet til den innloggede adminen.
   const fetchMembersForAdmin = async (adminId: string) => {
     try {
       const token = await authInstance.currentUser?.getIdToken(true);
@@ -204,6 +219,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Setter innlogget status og henter medlemmer hvis brukeren er logget inn.
   useEffect(() => {
     const unsubscribe = authInstance.onAuthStateChanged(async(user) => {
       if (user) {
@@ -226,6 +242,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  // Returnerer selve konteksten.
   return (
     <AppContext.Provider
       value={{
@@ -255,6 +272,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Henter konteksten i ulike komponenter.
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error('useAppContext must be used within AppProvider');

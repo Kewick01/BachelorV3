@@ -1,23 +1,29 @@
+// AddTaskScreen.tsx - Skjerm hvor admin kan tildele ny oppgave til et spesifikt medlem.
+// Krever at brukeren er logget inn og sender deretter token til backend for autentifisering.
+// Navigeres til via Admin-skjermen med medlemId som parameter.
+
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet} from 'react-native';
+import { Text, TextInput, TouchableOpacity, Alert, StyleSheet} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
-import LinearGradient from 'react-native-linear-gradient';
-import { authInstance } from '../firebase';
-import { useAppContext } from "../context/AppContext";
+import { RootStackParamList } from '../types';               // Typing for navigasjon.
+import LinearGradient from 'react-native-linear-gradient';   // For bakgrunnsgradient.
+import { authInstance } from '../firebase';                  // Firebase for å hente ID-token.
+import { useAppContext } from "../context/AppContext";       // For å oppdatere medlemmet etter oppgaven er lagt til.
 
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddTask'>;
 
 export default function AddTaskScreen({ route, navigation}: Props) {
-    const { memberId } = route.params;
-    const { refreshMember } = useAppContext();
-    const [ title, setTitle ] = useState('');
-    const [price, setPrice] = useState('');
+    const { memberId } = route.params;           // Henter medlem-ID fra navigasjonsrute. 
+    const { refreshMember } = useAppContext();   // Funksjon for å oppdatere data etter lagring.
+    const [ title, setTitle ] = useState('');    // Oppgavens tittel.
+    const [price, setPrice] = useState('');      // Belønningen i kr, men input regnes som tekst.
 
+    // Legger til oppgave.
     const handleAddTask = async () => {
-        const numericPrice = Number(price);
+        const numericPrice = Number(price);      // Konverterer inputen til tall her.
 
+        // Validering knyttet til inputen.
         if (!title.trim() || !price) {
             Alert.alert("Fyll ut alle feltene!");
             return;
@@ -32,6 +38,7 @@ export default function AddTaskScreen({ route, navigation}: Props) {
         const token = await authInstance.currentUser?.getIdToken(true);
         if (!token) throw new Error("Mangler gyldig token");
 
+        // Sender POST-forespørsel til backend.
         const response = await fetch(`http://192.168.11.224:3000/add-task/${memberId}`, {
             method: 'POST',
             headers: {
@@ -51,7 +58,7 @@ export default function AddTaskScreen({ route, navigation}: Props) {
         }
 
         Alert.alert("Oppgave lagt til!");
-        await refreshMember(memberId);
+        await refreshMember(memberId);          // Oppdaterer medlemsdata lokalt.
         navigation.goBack();
       } catch (err) {
         console.error("Feil ved lagring", err);
@@ -62,12 +69,15 @@ export default function AddTaskScreen({ route, navigation}: Props) {
     return (
         <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.container}>
             <Text style={styles.title}>🧹 Legg til ny oppgave</Text>
+
+            {/* Inputfelt for navn på oppgaven */}
             <TextInput
             placeholder="Oppgavetittel"
             value={title}
             onChangeText={setTitle}
             style={styles.input}
             />
+            {/* Inputfelt for belønningen for oppgaven */}
             <TextInput
             placeholder="Belønning i kr"
             value={price}
@@ -75,6 +85,7 @@ export default function AddTaskScreen({ route, navigation}: Props) {
             keyboardType="number-pad"
             style={styles.input}
             />
+            {/* Knapp for lagring */}
             <TouchableOpacity style={styles.button} onPress={handleAddTask}>
                 <Text style={styles.buttonText}>Legg til</Text>
             </TouchableOpacity>
@@ -82,6 +93,7 @@ export default function AddTaskScreen({ route, navigation}: Props) {
     );
     }
 
+    // Stil for skjermen.
     const styles = StyleSheet.create({
         container: { flex: 1, padding: 20, justifyContent: 'center'},
         title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20},

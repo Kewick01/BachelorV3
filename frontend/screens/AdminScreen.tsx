@@ -1,3 +1,7 @@
+// AdminScreen.tsx - Skjerm for administrasjon av medlemmer.
+// Brukes til å legge til, redigere og slette medlemmer. Det er også en "legg til oppgave" funksjon knyttet til hvert medlem.
+// Skjermen krever at brukeren er autentisert og har admin-rettigheter som bekreftes via PIN.
+
 import React, { useState } from 'react';
 import {
   View,
@@ -8,28 +12,32 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';                    // Henter inn data fra AppProvider fra AppContext.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { authInstance } from '../firebase';
-import StickmanFigure from '../components/StickmanFigure';
-import LinearGradient from 'react-native-linear-gradient';
+import { authInstance } from '../firebase';                               // Firebase for token-autentifisering.
+import StickmanFigure from '../components/StickmanFigure';                // Komponent som tegner pinnefiguren.
+import LinearGradient from 'react-native-linear-gradient';                // For bakgrunnsgradient.
 
 type Props = NativeStackScreenProps<any>;
 
+// Definerer tilgjengelige farger for pinnefiguren.
 const availableColors = ['red', 'blue', 'green', 'yellow', 'orange', 'black', 'purple'];
 
 export default function AdminScreen({ navigation }: Props) {
   const { members, addMember, deleteMember, updateMember } = useAppContext();
 
+  // Skjemastate for nytt medlem.
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [selectedColor, setSelectedColor] = useState(availableColors[0]);
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Skjemastate for redigering av medlem.
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberName, setEditingMemberName] = useState('');
   const [editingColor, setEditingColor] = useState(availableColors[0]);
 
+  // Opprettelse av nytt medlem.
   const handleAdd = async () => {
     if (name.trim() && code.length === 4) {
       try{
@@ -70,11 +78,11 @@ export default function AdminScreen({ navigation }: Props) {
           },
         };
 
-        addMember(newMember);
+        addMember(newMember);                 // Oppdaterer konteksten.
         setName("");
         setCode("");
         setSelectedColor(availableColors[0]);
-        setShowAddForm(false);
+        setShowAddForm(false);                // Skjuler skjema.
 
         Alert.alert("Suksess!", "Medlem ble lagt til.");
       } catch (error) {
@@ -87,6 +95,7 @@ export default function AdminScreen({ navigation }: Props) {
 
   };
 
+  // Oppdaterer medlem etter redigering.
   const handleUpdate = () => {
     if (!editingMemberId) return;
 
@@ -106,6 +115,7 @@ export default function AdminScreen({ navigation }: Props) {
     setEditingMemberId(null);
   };
 
+  // Render-funksjon for hvert medlem i FlatList.
   const renderMember = ({ item }: any) => {
     const isEditing = editingMemberId === item.id;
 
@@ -194,6 +204,7 @@ export default function AdminScreen({ navigation }: Props) {
     );
   };
 
+  // Hovedrender.
   return (
     <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.gradient}>
       <FlatList
@@ -209,6 +220,7 @@ export default function AdminScreen({ navigation }: Props) {
         }
         ListFooterComponent={
           <>
+          {/* Legg til nytt medlem */}
             {!showAddForm ? (
               <TouchableOpacity
                 style={[styles.primaryButton, { marginVertical: 20 }]}

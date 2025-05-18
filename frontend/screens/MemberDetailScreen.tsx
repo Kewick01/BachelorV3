@@ -1,3 +1,5 @@
+// MemberDetailScreen.tsx - Skjerm for detaljert visning av hvert enkelt medlem.
+// Krever PIN-kode knyttet til medlemmet og ikke admin for tilgang. Viser oppgaver og butikk, hvor medlemmet kan kjøpe tilbehør.
 import React, { useState } from 'react';
 import {
   View,
@@ -8,17 +10,18 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';       // Henter inn data fra AppProvider fra AppContext.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList } from '../types';               // Definerer parametere for navigasjon.
 import LinearGradient from 'react-native-linear-gradient';
-import { authInstance } from '../firebase';
-import StickmanFigure from '../components/StickmanFigure';
+import { authInstance } from '../firebase';                  // Firebase auth brukt til token.
+import StickmanFigure from '../components/StickmanFigure';   // Komponent for å vise figuren.
 import { useEffect } from 'react';
-import AdminPinPrompt from '../components/AdminPinPrompt';
+import AdminPinPrompt from '../components/AdminPinPrompt';   // For å bekrefte adminhandlinger.
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MemberDetail'>;
 
+// Tilgjengelige varer i butikken.
 const shopItems = [
   { id: '1', name: '🎩 Hatt', price: 3 },
   { id: '2', name: '🕶️ Briller', price: 5 },
@@ -30,20 +33,23 @@ const shopItems = [
 
 export default function MemberDetailScreen({ route, navigation }: Props) {
   const { memberId } = route.params;
+  // Henter funksjoner og medlemsdata.
   const { refreshMember } = useAppContext();
   const { members, updateMember, completeTask } = useAppContext();
   const member = members.find((m) => m.id === memberId);
-
+  // Lokale states.
   const [enteredCode, setEnteredCode] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'shop'>('tasks');
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<string |null>(null);
 
+  // Henter den oppdaterte informasjonen om medlem når skjermen åpnes.
   useEffect(() => {
     refreshMember(memberId);
   }, [memberId]);
 
+  // Viser til fallback hvis medlemmet ikke finnes.
   if (!memberId || !member) {
     return (
       <View style={styles.center}>
@@ -54,6 +60,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
 
   const equipped = member.equippedCosmetics || [];
 
+  // Logikken for kjøp knyttet til de kosmetiske elementene i butikken.
   const handlePurchase = async (item: { id: string; name: string; price: number}) => {
     try {
       console.log("Kjører handlePurchase", item);
@@ -90,6 +97,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     }
   };
 
+  // Brukeren kan ta av og på de kosmetiske elementene.
   const toggleEquip = (itemId: string) => {
     const current = member.equippedCosmetics || [];
     const updated = current.includes(itemId)
@@ -104,6 +112,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     updateMember(updatedMember, true);
   };
 
+  // Brukeren kan selge de kosmetiske elementene og få pengene tilbake.
   const handleSell = (itemId: string) => {
     const price = shopItems.find(i => i.id === itemId)?.price || 0;
     const updatedCosmetics = (member.cosmetics || []).filter((id) => id !== itemId);
@@ -121,6 +130,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     Alert.alert("Varen ble solgt!");
   };
 
+  // Hvis bruker ikke har tastet rikitg PIN ennå, så vil en PIN-input komme opp.
   if (!authenticated) {
     return (
       <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.gradient}>
@@ -149,17 +159,20 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  // Innhold når medlemmet har låst opp sin bruker.
   return (
     <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.gradient}>
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>{member.name}</Text>
           <Text style={styles.subtitle}>💰 {member.money} kr</Text>
 
+          {/* Tegner karakteren med utstyret */}
           <StickmanFigure
           color={member.character.color}
           accessories={member.equippedCosmetics || []}
           />
 
+          {/* Veksler mellom oppgaver og butikk */}
           <View style={styles.tabs}>
             <TouchableOpacity onPress={() => setActiveTab('tasks')}>
               <Text style={[styles.tab, activeTab === 'tasks' && styles.activeTab]}>📋 Oppgaver</Text>
@@ -171,6 +184,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
 
           <View style={styles.tabContent}>
             {activeTab === 'tasks' ? (
+              // Viser oppgaver
               member.tasks.length > 0 ? (
                 member.tasks.map((task) => (
                   <View key={task.id} style={{ marginBottom: 8}}>
@@ -194,6 +208,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.taskText}>Tomt for oppgaver.</Text>
               )
             ) : (
+              // Viser butikkvarer.
               <View style={styles.shopGrid}>
                 {shopItems.map((item) => {
                   const ownsItem = member.cosmetics?.includes(item.id);
@@ -235,6 +250,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
           </View>
         </ScrollView>
 
+        {/* Krever bekreftelse før en oppgave kan fullføres, dette er da admin-PIN */}
         <AdminPinPrompt
         visible={showPinPrompt}
         onCancel={() => {

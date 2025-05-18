@@ -1,3 +1,6 @@
+// DashboardScreen.tsx - Hovedskjerm for innloggede brukere.
+// Viser oversikt over alle medlemmer som er knyttet til admin-bruker. Disse vises som en pinnefigur i et rom.
+// Gir tilgang til AdminScreen via admin-PIN og en logout.
 import React, { useState } from 'react';
 import {
   View,
@@ -6,16 +9,15 @@ import {
   TouchableOpacity,
   Alert,
   Animated,
-  Dimensions,
 } from 'react-native';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';                     // Henter inn data fra AppProvider fra AppContext.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import LinearGradient from 'react-native-linear-gradient';
-import StickmanFigure from '../components/StickmanFigure';
-import AdminPinPrompt from '../components/AdminPinPrompt';
-import auth from '@react-native-firebase/auth';
+import LinearGradient from 'react-native-linear-gradient';                 // For bakgrunnsgradient.
+import StickmanFigure from '../components/StickmanFigure';                 // Komponent for visning av pinnefiguren.
+import AdminPinPrompt from '../components/AdminPinPrompt';                 // Pop-up fro Admin PIN.
+import auth from '@react-native-firebase/auth';                            // For utlogging.
 
-
+// Definerer faste posisjoner hvor figurer kan plasseres.
 const predefinedPositions = [
   { top: 80, left: 30 },
   { top: 80, left: 200 },
@@ -28,9 +30,10 @@ const predefinedPositions = [
 type Props = NativeStackScreenProps<any>;
 
 export default function DashboardScreen({ navigation }: Props) {
-  const { isAdmin, toggleAdmin, members } = useAppContext();
-  const [showPinPrompt, setShowPinPrompt] = useState(false);
+  const { members } = useAppContext();                       // Henter medlemmer.
+  const [showPinPrompt, setShowPinPrompt] = useState(false); // Styrer syneligheten for PIN-popup.
 
+  // Logger ut brukeren.
   const handleLogout = async () => {
     try {
       await auth().signOut();
@@ -42,16 +45,18 @@ export default function DashboardScreen({ navigation }: Props) {
     }
   };
 
+  // Viser PIN-prompt for admin-tilgang.
   const requestAdminAccess = () => {
     setShowPinPrompt(true);
   };
 
+  // Tegner en pinnefigur med animasjon og trykkbarhet.
   const renderMember = ({ item, index }: any) => {
     if (!item.id) {
       console.warn("Medlem mangler ID:", item)
     }
-    const scale = new Animated.Value(1);
-    const position = predefinedPositions[index % predefinedPositions.length];
+    const scale = new Animated.Value(1); // Skalering for animasjon.
+    const position = predefinedPositions[index % predefinedPositions.length]; // Velger en posisjon.
 
     return (
       <Animated.View
@@ -81,6 +86,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
   return (
     <LinearGradient colors={['#fcdada', '#c7ecfa']} style={styles.container}>
+      {/* Topptekst og logout */}
       <View style={styles.topBar}>
         <Text style={styles.title}>🏠 Hjemmelobby</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -88,6 +94,7 @@ export default function DashboardScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
+      {/* Midten - tegner alle medlemmer */}
       <View style={styles.floor}>
         {members.length > 0 ? (
           members.map((member, index) => renderMember({ item: member, index }))
@@ -96,10 +103,12 @@ export default function DashboardScreen({ navigation }: Props) {
         )}
       </View>
 
+      {/* Admin-knapp - fører til adminskjerm etter PIN */}
       <TouchableOpacity style={styles.adminButton} onPress={requestAdminAccess}>
         <Text style={styles.buttonText}>⚙️ Gå til Admin-verktøy</Text>
       </TouchableOpacity>
 
+       {/* PIN-popup for å åpne AdminScreen */}
       <AdminPinPrompt
         visible={showPinPrompt}
         onCancel={() => setShowPinPrompt(false)}

@@ -1,11 +1,16 @@
+// StickmanFigure.tsx - Komponent for å vise en enkel figur med valgfritt tilbehør.
+// SVG-grafikk brukes for å tegne kroppen og tilbehøret.
+// Tilbehøret styres dynamisk basert på en array med ID-er.
 import React from 'react';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 
+// Farge på figuren og hvilke tilbehør den har på seg.
 type Props = {
     color: string;
     accessories: string[];
 }
 
+// Komponent som returnerer en SVG-figur.
 const StickmanFigure: React.FC<Props> = ({ color, accessories }) => (
     <Svg height="150" width="90" viewBox='0 0 60 100'>
         <Circle cx="30" cy="20" r="10" stroke={color} strokeWidth="2" fill="none" />

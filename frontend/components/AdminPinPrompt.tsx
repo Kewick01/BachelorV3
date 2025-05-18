@@ -1,3 +1,6 @@
+// AdminPinPrompt.tsx - Popup-komponent for å bekrefte at brukeren er admin.
+// Brukes for å beskytte sensitive handlinger som oppretting, redigering og sletting av medlemmer, samt legge til oppgaver.
+// Sjekker om den innskrevne PIN-koden stemmer med den som er lagret i Firebase.
 import React, { useState } from "react";
 import {
   View,
@@ -8,21 +11,24 @@ import {
   Alert,
   Modal,
 } from "react-native";
-import LinearGradient from "react-native-linear-gradient";
-import auth from "@react-native-firebase/auth";
+import LinearGradient from "react-native-linear-gradient";  // For bakgrunnsgradient.
+import auth from "@react-native-firebase/auth";             // Henter ID-token.
 
+// Props som forventes.
 type Props = {
-  visible: boolean;
-  onSuccess: () => void;
-  onCancel: () => void;
+  visible: boolean;       // Modalen skal vises
+  onSuccess: () => void;  // Ved gyldig PIN.
+  onCancel: () => void;   // Ved avbrudd.
 };
 
+// Hovedkomponent.
 export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) {
-  const [pin, setPin] = useState("");
+  const [pin, setPin] = useState(""); // Inputfelt for PIN.
 
+  // Sjekker PIN mot backend.
   const handleConfirm = async () => {
     try {
-      const token = await auth().currentUser?.getIdToken(true);
+      const token = await auth().currentUser?.getIdToken(true); // Henter ID-token fra Firebase.
       if (!token) throw new Error("Ingen innlogget bruker");
 
       const response = await fetch(
@@ -30,21 +36,21 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,   // Autentifisering.
           },
-          body: JSON.stringify({ pin }),
+          body: JSON.stringify({ pin }),        // Her sendes PIN som ble skrevet inn.
         });
 
       const data = await response.json();  
       if (response.ok) {
-        onSuccess();
+        onSuccess();                           // Kaller tilbake skjerm, basert på hvor PIN skal navigeres.
       } else {
         Alert.alert("Feil", "Ugyldig PIN. Prøv igjen.");
       }
     } catch (err) {
       Alert.alert("Feil", "Ugyldig PIN. Prøv igjen.");
     } finally {
-      setPin("");
+      setPin(""); // Tømmer felt.
     }
   };
 
@@ -53,6 +59,8 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
       <LinearGradient colors={["#fcdada", "#c7ecfa"]} style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>🔒 Admin PIN</Text>
+
+          {/* Inputfelt for PIN */}
           <TextInput
             placeholder="4-sifret admin PIN"
             placeholderTextColor="#999"
@@ -64,10 +72,12 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
             style={styles.input}
           />
 
+          {/* Knapp for bekreftelse */}
           <TouchableOpacity style={styles.primaryButton} onPress={handleConfirm}>
             <Text style={styles.buttonText}>Bekreft</Text>
           </TouchableOpacity>
 
+          {/* Knapp for avbrytelse */}
           <TouchableOpacity style={styles.secondaryButton} onPress={onCancel}>
             <Text style={styles.buttonText}>Avbryt</Text>
           </TouchableOpacity>

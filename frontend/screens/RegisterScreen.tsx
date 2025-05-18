@@ -1,3 +1,6 @@
+// RegisterScreen.tsx - Skjerm for å registrere nå bruker.
+// Sender brukerdata til backend-API som oppretter brukeren i Firebase Authentication og Firestore.
+// Validerer input før forespørselen sendes.
 import React, { useState } from 'react';
 import {
   Text,
@@ -7,13 +10,11 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import auth from '@react-native-firebase/auth';
-import { useAppContext } from '../context/AppContext';
+import LinearGradient from 'react-native-linear-gradient';               // Gardientbakgrunn
+import { NativeStackScreenProps } from '@react-navigation/native-stack'; // Navigasjonsstøtte
 
 type Props = NativeStackScreenProps<any>;
-
+// Lokale states for alle inputfeltene.
 export default function RegisterScreen({ navigation }: Props) {
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
@@ -21,30 +22,34 @@ export default function RegisterScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [adminPin, setAdminPin] = useState('');
 
+  // Funksjonen som håndterer registreringsprosessen.
   const handleRegister = async () => {
+    // Grunnleggende validering av inputsene.
     if (!username || !email || !password || !phone || !adminPin) {
       Alert.alert('Feil', 'Vennligst fyll ut alle feltene.');
       return;
     }
 
+    // Regex-validering av telefonnummeret.
     if (phone && !/^\+\d{7,15}$/.test(phone)) {
       Alert.alert('Feil', 'Vennligst oppgi et gyldig telefonnummer med landskode.');
       return;
     }
 
+    // Minimum passordlengde.
     if (password.length < 6) {
       Alert.alert('Feil', 'Passordet må være minst 6 tegn langt.');
       return;
     }
 
+    // PIN til admin må være ekstakt 4 siffer.
     if (adminPin && adminPin.length !== 4) {
       Alert.alert('Feil', 'Admin PIN må være 4 siffer.');
       return;
     }
 
+    // Sender data til backend for å opprette brukeren.
     try {
-
-
       const response = await fetch('http://192.168.11.224:3000/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,6 +63,7 @@ export default function RegisterScreen({ navigation }: Props) {
       });
 
       const data = await response.json();
+      // Håndterer feil som oppstår i backend.
       if (!response.ok) {
         if (response.status === 409) {
         Alert.alert('Feil', data.error || 'E-postadressen er allerede i bruk.');
@@ -67,6 +73,7 @@ export default function RegisterScreen({ navigation }: Props) {
        return;
       }
       
+      // Ved suksess og eventuelle feil som havner i catch.
       Alert.alert('Suksess', 'Brukeren er registrert!');
       navigation.navigate('Login');
     } catch (error) {
@@ -83,12 +90,14 @@ export default function RegisterScreen({ navigation }: Props) {
         <Text style={styles.title}>🧑‍🚀 Registrering!</Text>
         <Text style={styles.subtitle}>Lag en konto for å administrere hjemmet!</Text>
 
+        {/* Brukernavn */}
         <TextInput
           placeholder="Brukernavn"
           value={username}
           onChangeText={setUsername}
           style={styles.input}
         />
+        {/* Telefonnummer */}
         <TextInput
           placeholder="Mobilnummer (+47...)"
           value={phone}
@@ -96,6 +105,7 @@ export default function RegisterScreen({ navigation }: Props) {
           style={styles.input}
           keyboardType="phone-pad"
         />
+        {/* E-post */}
         <TextInput
           placeholder="E-post"
           value={email}
@@ -103,6 +113,7 @@ export default function RegisterScreen({ navigation }: Props) {
           style={styles.input}
           keyboardType="email-address"
         />
+        {/* Passord */}
         <TextInput
           placeholder="Passord"
           value={password}
@@ -110,6 +121,7 @@ export default function RegisterScreen({ navigation }: Props) {
           secureTextEntry
           style={styles.input}
         />
+        {/* Admin-PIN */}
         <TextInput
           placeholder="PIN til administrering av medlemmer (4 siffer)"
           value={adminPin}
@@ -119,11 +131,12 @@ export default function RegisterScreen({ navigation }: Props) {
           secureTextEntry
           style={styles.input}
         />
-
+        {/* Registreringsknapp */}
         <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
           <Text style={styles.buttonText}>🚀 REGISTRER</Text>
         </TouchableOpacity>
 
+        {/* Tilbake til login */}
         <TouchableOpacity
           onPress={() => navigation.navigate('Login')}
           style={styles.backButton}
@@ -134,6 +147,8 @@ export default function RegisterScreen({ navigation }: Props) {
     </LinearGradient>
   );
 }
+
+// Stiler for komponenten 
 
 const styles = StyleSheet.create({
   gradient: {
