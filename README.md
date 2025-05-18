@@ -78,7 +78,7 @@ Andre teknologier:
 ## Test/Demo
 Vi har kun testet applikasjonen på en adnroid emulator gjennom Android Studio software.
 Siden det kan være vanskelig å kjøre appen for sensor på sin egen maskin har vi laget
-en video hvor applikasjonen blir gjennomgått. Det skal også forekomme en live-demo
+en Youtube-demo hvor applikasjonen blir gjennomgått. Lenke til videoen kan du finne her og i rapporten. Det skal også forekomme en live-demo
 under muntlig presentasjon med sensor tilstedet.
 
 ## Utviklet i sammenheng med bacheloroppgave
@@ -93,3 +93,5 @@ den skulle være tilgjengelig for både ios og Android.
 Spørsmål om prosjektet kan rettes til kandidatene og leses mer om i selve rapporten.
 
 
+## Lenke til Youtube-demo:
+https://youtu.be/vJCsznss_Gs
