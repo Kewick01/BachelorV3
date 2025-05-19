@@ -71,7 +71,7 @@ export default function MemberDetailScreen({ route, navigation }: Props) {
         return;
       }
 
-      const res = await fetch("http://<DIN-IP-ELLER-HOST>:3000/purchase", {
+      const res = await fetch("http://<DIN_IP_ELLER_HOST>:3000/purchase", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

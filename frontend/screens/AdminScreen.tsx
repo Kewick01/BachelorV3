@@ -44,7 +44,7 @@ export default function AdminScreen({ navigation }: Props) {
         const token = await authInstance.currentUser?.getIdToken(true);
         if (!token) throw new Error('Token mangler');
 
-        const response = await fetch('http://<DIN-IP-ELLER-HOST>:3000/create-member', {
+        const response = await fetch('http://<DIN_IP_ELLER_HOST>:3000/create-member', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -32,7 +32,7 @@ export default function AdminPinPrompt({ visible, onSuccess, onCancel }: Props) 
       if (!token) throw new Error("Ingen innlogget bruker");
 
       const response = await fetch(
-        "http://<DIN-IP-ELLER-HOST>:3000/verify-pin", {
+        "http://<DIN_IP_ELLER_HOST>:3000/verify-pin", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
